@@ -40,8 +40,7 @@ lint:
 
 gz_releases=$(addsuffix .gz, $(PLATFORM_LIST))
 
-releases: $(gz_releases)
-
+releases: $(PLATFORM_LIST)
 
 clean:
 	rm $(BINDIR)/*
