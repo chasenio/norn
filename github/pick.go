@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"net/http"
+	"strings"
 )
 
 type PickClient struct {
@@ -35,45 +36,51 @@ func NewClient(ctx context.Context, token string) *PickClient {
 	}
 }
 
-func (c *PickClient) Pick(ctx context.Context, repo *RepoOption, opt *PickOption) error {
+func parseRepo(repo string) (*RepoOption, error) {
+	// parse "kentio/norn" 字符串分割
+	parts := strings.Split(repo, "/")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid repo: %s", repo)
+	}
+	return &RepoOption{
+		Owner: parts[0],
+		Repo:  parts[1],
+	}, nil
+}
 
-	if repo == nil || opt == nil {
+func (c *PickClient) Pick(ctx context.Context, repo string, opt *PickOption) error {
+	// parse "kentio/norn"
+	repoOpt, err := parseRepo(repo)
+	if err != nil {
+		return err
+	}
+	if repoOpt == nil || opt == nil {
 		return ErrInvalidOptions
 	}
 
-	commit, response, err := c.client.Repositories.GetCommit(ctx, repo.Owner, repo.Repo, opt.SHA, nil)
+	branchRef, _, err := c.client.Git.GetRef(ctx, repoOpt.Owner, repoOpt.Repo, fmt.Sprintf("refs/heads/%s", opt.Branch))
 	if err != nil {
-		logrus.Infof("response: %v", response)
-		return err
-	}
-	// Get Branch
-	_, response, err = c.client.Repositories.GetBranch(ctx, repo.Owner, repo.Repo, opt.Branch, false)
-	if err != nil {
-		logrus.Infof("response: %v", response)
-		return err
+		return fmt.Errorf("failed to get branch ref: %v", err)
 	}
 
-	// get tree
+	// 获取源提交(commitSHA)的提交对象
+	commit, _, err := c.client.Repositories.GetCommit(ctx, repoOpt.Owner, repoOpt.Repo, opt.SHA, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get commit: %v", err)
+	}
 
-	cherryPickMessage := fmt.Sprintf("Cherry-pick from %s Source Message: %s", *commit.SHA, *commit.Commit.Message)
-	createCommit, response, err := c.client.Git.CreateCommit(ctx, repo.Owner, repo.Repo, &github.Commit{
-		//SHA:       commit.SHA,
-		Author:    commit.Commit.Author,
-		Committer: commit.Commit.Committer,
-		Message:   github.String(cherryPickMessage),
-		Tree:      commit.Commit.Tree,
-		//Parents:      branch.Commit.Parents,
-		Stats:        commit.Stats,
-		URL:          commit.Commit.URL,
-		Verification: commit.Commit.Verification,
-		NodeID:       commit.NodeID,
+	// 创建新的提交对象
+	cherryPickMessage := fmt.Sprintf("Cherry-pick from %s\nSource Commit Message:\n%s", *commit.SHA, *commit.Commit.Message)
+	createCommit, _, err := c.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &github.Commit{
+		Message: github.String(cherryPickMessage),
+		Tree:    commit.Commit.Tree,
+		Parents: []*github.Commit{{SHA: branchRef.Object.SHA}, {SHA: commit.SHA}},
 	})
 	if err != nil {
-		logrus.Infof("response: %v", response)
-		return err
+		return fmt.Errorf("failed to create commit: %v", err)
 	}
-	// Update branch
-	reference, response, err := c.client.Git.UpdateRef(ctx, repo.Owner, repo.Repo, &github.Reference{
+	// Update target branch ref
+	reference, response, err := c.client.Git.UpdateRef(ctx, repoOpt.Owner, repoOpt.Repo, &github.Reference{
 		Ref: github.String(fmt.Sprintf("refs/heads/%s", opt.Branch)),
 		Object: &github.GitObject{
 			SHA: createCommit.SHA,
@@ -82,14 +89,11 @@ func (c *PickClient) Pick(ctx context.Context, repo *RepoOption, opt *PickOption
 		false,
 	)
 	if err != nil {
-		logrus.Infof("response: %v", response)
-		return err
+		return fmt.Errorf("failed to update ref: %v", err)
 	}
 	if response.StatusCode == http.StatusUnprocessableEntity {
-		return fmt.Errorf("reference: %v", reference)
+		return fmt.Errorf("reference: %v", *reference.Ref)
 	}
-	logrus.Infof("reference: %v", reference)
+	logrus.Infof("success to pick commit: %s to ref: %s", *createCommit.SHA, *reference.Ref)
 	return nil
 }
-
-// 实现一个github的pick功能

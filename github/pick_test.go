@@ -7,11 +7,11 @@ import (
 
 func TestPickClient_Pick(t *testing.T) {
 	ctx := context.Background()
-	SHA := "ad3719a041af1a374eb88262df79aa784b2d0fc0"
+	SHA := "9f320ef77b4a8818bf48a7c28a93f9e2faeecdc7"
 	Branch := "release/23.04"
 	token := ""
 	client := NewClient(context.Background(), token)
-	err := client.Pick(ctx, &RepoOption{Owner: "kentio", Repo: "test_cherry_pick"},
+	err := client.Pick(ctx, "",
 		&PickOption{SHA: SHA, Branch: Branch})
 	t.Logf("err: %v", err)
 }
