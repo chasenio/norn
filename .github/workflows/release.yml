@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - topic/*
+      - topic/**
 
 permissions:
   contents: write
@@ -35,12 +35,12 @@ jobs:
         run: |
           make linux-amd64
 
-
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: bin/*
-          draft: true
+          draft: false
           prerelease: true
+          tag_name: ${{ github.ref }}
