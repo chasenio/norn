@@ -33,7 +33,7 @@ jobs:
 
       - name: Build binary
         run: |
-          make linux-amd64
+          make -j releases
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
@@ -44,3 +44,4 @@ jobs:
           draft: false
           prerelease: true
           tag_name: ${{ github.ref }}
+          append_body: true
