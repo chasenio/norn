@@ -38,6 +38,9 @@ lint:
 	GOOS=windows golangci-lint run ./...
 	GOOS=linux golangci-lint run ./...
 
+gz_releases=$(addsuffix .gz, $(PLATFORM_LIST))
+
+releases: $(gz_releases)
 
 
 clean:
