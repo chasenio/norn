@@ -6,6 +6,9 @@ on:
       - master
       - topic/*
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,6 +38,9 @@ jobs:
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: bin/*
           draft: true
+          prerelease: true
