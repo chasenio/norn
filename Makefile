@@ -1,12 +1,8 @@
 .PHONY: all build compile clean generate
 
+NAME=norn
+BINDIR=bin
 BUILDTIME ?= $(shell date +%Y-%m-%d_%I:%M:%S)
-GITCOMMIT ?= $(shell git rev-parse -q HEAD)
-ifeq ($(CI_PIPELINE_ID),)
-	BUILDNUMER := private
-else
-	BUILDNUMER := $(CI_PIPELINE_ID)
-endif
 VERSION ?= $(shell git describe --tags --always --dirty)
 
 LDFLAGS = -extldflags \
@@ -16,22 +12,36 @@ LDFLAGS = -extldflags \
 		  -X "main.GitCommit=$(GITCOMMIT)" \
 		  -X "main.BuildNumber=$(BUILDNUMER)"
 
-all: build
+GOBUILD=CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)"
 
-clean:
-	rm -rf bin norns-*.zip
+PLATFORM_LIST = \
+	linux-amd64 \
+	linux-arm64 \
+	darwin-amd64
+
+all: linux-amd64 linux-arm64 darwin-amd64
 
 build:
 	go build -o bin/norns -ldflags "$(LDFLAGS)"
 
+linux-arm64:
+	GOARCH=arm64 GOOS=linux $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
 
-package: bin/norns-linux-amd64-$(VERSION)-$(BUILDNUMER)
-	echo $(GITCOMMIT) > commit.txt
-	echo $(VERSION) > version.txt
-	zip -r norns-$(VERSION)-$(BUILDNUMER).zip bin commit.txt version.txt
+linux-amd64:
+	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
+
+darwin-amd64:
+	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
+
+lint:
+	GOOS=darwin golangci-lint run ./...
+	GOOS=windows golangci-lint run ./...
+	GOOS=linux golangci-lint run ./...
+
+gz_releases=$(addsuffix .gz, $(PLATFORM_LIST))
+
+releases: $(gz_releases)
 
 
-bin/norns-linux-amd64-$(VERSION)-$(BUILDNUMER):
-	go build -o bin/norns-linux-amd64-$(VERSION)-$(BUILDNUMER) -ldflags "$(LDFLAGS)"
-
-compile: bin/norns-linux-amd64-$(VERSION)-$(BUILDNUMER)
+clean:
+	rm $(BINDIR)/*
