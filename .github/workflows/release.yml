@@ -44,3 +44,4 @@ jobs:
           files: bin/*
           draft: false
           prerelease: true
+          tag_name: ${{ github.ref }}
