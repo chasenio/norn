@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - topic/*
+      - topic/**
 
 permissions:
   contents: write
