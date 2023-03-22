@@ -49,7 +49,6 @@ func parseRepo(repo string) (*RepoOption, error) {
 }
 
 func (c *PickClient) Pick(ctx context.Context, repo string, opt *PickOption) error {
-	// parse "kentio/norn"
 	repoOpt, err := parseRepo(repo)
 	if err != nil {
 		return err
