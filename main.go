@@ -12,7 +12,7 @@ var (
 	BuildTime   = ""
 	BuildNumber = ""
 	GitCommit   = ""
-	Version     = "1.0.0"
+	Version     = "0.0.1"
 )
 
 func newApp() *cli.App {
