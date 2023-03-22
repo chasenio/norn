@@ -44,3 +44,4 @@ jobs:
           draft: false
           prerelease: true
           tag_name: ${{ github.ref }}
+          append_body: true
