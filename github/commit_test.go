@@ -22,7 +22,7 @@ func TestCommitService_Find(t *testing.T) {
 
 func TestCommitService_Get(t *testing.T) {
 	ctx := context.Background()
-	token := "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"
+	token := ""
 	client := NewGithubClient(ctx, token)
 	commitClient := NewCommitService(client)
 
