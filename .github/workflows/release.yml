@@ -6,6 +6,8 @@ on:
       - master
       - topic/**
 
+  workflow_dispatch:
+
 permissions:
   contents: write
 
