@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gh "github.com/google/go-github/v50/github"
+	"github.com/kentio/norn/types"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"net/http"
@@ -54,7 +55,7 @@ func (c *PickClient) Pick(ctx context.Context, repo string, opt *PickOption) err
 		return err
 	}
 	if repoOpt == nil || opt == nil {
-		return ErrInvalidOptions
+		return types.ErrInvalidOptions
 	}
 
 	branchRef, _, err := c.client.Git.GetRef(ctx, repoOpt.Owner, repoOpt.Repo, fmt.Sprintf("refs/heads/%s", opt.Branch))

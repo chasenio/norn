@@ -7,8 +7,5 @@ type FindOptions struct {
 type CreateOptions struct {
 }
 
-type UpdateOptions struct {
-}
-
 type DeleteOptions struct {
 }

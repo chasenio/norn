@@ -41,9 +41,9 @@ func NewCommitService(client *gh.Client) *CommitService {
 	}
 }
 
-func (s *CommitService) Get(ctx context.Context, opt *types.GetCommitOption) (*Commit, error) {
+func (s *CommitService) Get(ctx context.Context, opt *types.GetCommitOption) (types.Commit, error) {
 	if opt == nil {
-		return nil, ErrInvalidOptions
+		return nil, types.ErrInvalidOptions
 	}
 	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {
@@ -57,11 +57,11 @@ func (s *CommitService) Get(ctx context.Context, opt *types.GetCommitOption) (*C
 	return newCommit(commit), nil
 }
 
-func (s *CommitService) Create(ctx context.Context, opt *types.CreateCommitOption) (*Commit, error) {
+func (s *CommitService) Create(ctx context.Context, opt *types.CreateCommitOption) (types.Commit, error) {
 	if opt == nil {
-		return nil, ErrInvalidOptions
+		return nil, types.ErrInvalidOptions
 	}
-	repoOpt, err := parseRepo(*opt.Repo)
+	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {
 		return nil, err
 	}
@@ -70,19 +70,31 @@ func (s *CommitService) Create(ctx context.Context, opt *types.CreateCommitOptio
 
 	for _, p := range opt.Parents {
 		parents = append(parents, &gh.Commit{
-			SHA: gh.String(p.SHA()),
+			SHA: gh.String(p),
 		})
 	}
 
-	commit, response, err := s.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Commit{
-		Message: opt.PickMessage,
+	commit, _, err := s.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Commit{
+		Message: gh.String(opt.PickMessage),
 		Tree: &gh.Tree{
-			SHA: opt.Tree.SHA(),
+			SHA:       gh.String(opt.Tree.SHA()),
+			Entries:   nil,
+			Truncated: gh.Bool(false),
 		},
 		Parents: parents,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create commit: %v", err)
+	}
 
-	return nil, nil
+	return newGithubCommit(commit), nil
+}
+
+func newGithubCommit(c *gh.Commit) *Commit {
+	return &Commit{
+		sha:     *c.SHA,
+		message: *c.Message,
+	}
 }
 
 func newCommit(commit *gh.RepositoryCommit) *Commit {

@@ -1,15 +1,19 @@
 package types
 
+import "context"
+
 type GetCommitOption struct {
 	Repo string
 	SHA  string
 }
 
 type CreateCommitOption struct {
-	Repo        *string
-	Commit      *Commit
-	PickMessage *string
-	Parents     []Commit
+	Repo        string
+	Tree        Tree
+	SHA         string
+	PickMessage string
+	Target      string
+	Parents     []string
 }
 
 type Commit interface {
@@ -32,4 +36,9 @@ type TreeEntry interface {
 	Size() int
 	Content() string
 	Url() string
+}
+
+type CommitService interface {
+	Get(ctx context.Context, opt *GetCommitOption) (Commit, error)
+	Create(ctx context.Context, opt *CreateCommitOption) (Commit, error)
 }
