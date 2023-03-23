@@ -10,6 +10,7 @@ on:
 
   workflow_dispatch:
 
+
 permissions:
   contents: write
 
@@ -47,5 +48,5 @@ jobs:
           files: bin/*
           draft: false
           prerelease: true
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
           append_body: true
