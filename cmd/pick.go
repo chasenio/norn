@@ -11,6 +11,13 @@ func NewPickCommand() *cli.Command {
 		Name:  "pick",
 		Usage: "pick commits from one branch to another",
 		Flags: []cli.Flag{
+			&cli.PathFlag{
+				Name:     "path",
+				Usage:    "Path to the git repo",
+				Aliases:  []string{"p"},
+				Required: false,
+				Value:    ".pick.yaml",
+			},
 			&cli.StringFlag{
 				Name:    "vendor",
 				Usage:   "Git vendor, such as gh(github)",
@@ -32,12 +39,6 @@ func NewPickCommand() *cli.Command {
 				Name:     "sha",
 				Usage:    "Commit sha",
 				Aliases:  []string{"s"},
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "target",
-				Usage:    "Branch name",
-				Aliases:  []string{"t"},
 				Required: true,
 			},
 		},
