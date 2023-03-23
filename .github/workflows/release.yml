@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - topic/**
+      - tag/**
 
   workflow_dispatch:
 
