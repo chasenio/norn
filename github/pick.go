@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/v50/github"
+	gh "github.com/google/go-github/v50/github"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"net/http"
@@ -11,7 +11,7 @@ import (
 )
 
 type PickClient struct {
-	client *github.Client
+	client *gh.Client
 }
 
 type PickOption struct {
@@ -29,7 +29,7 @@ func NewClient(ctx context.Context, token string) *PickClient {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
 
-	client := github.NewClient(tc)
+	client := gh.NewClient(tc)
 
 	return &PickClient{
 		client: client,
@@ -70,18 +70,18 @@ func (c *PickClient) Pick(ctx context.Context, repo string, opt *PickOption) err
 
 	// 创建新的提交对象
 	cherryPickMessage := fmt.Sprintf("Cherry-pick from %s\nSource Commit Message:\n%s", *commit.SHA, *commit.Commit.Message)
-	createCommit, _, err := c.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &github.Commit{
-		Message: github.String(cherryPickMessage),
+	createCommit, _, err := c.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Commit{
+		Message: gh.String(cherryPickMessage),
 		Tree:    commit.Commit.Tree,
-		Parents: []*github.Commit{{SHA: branchRef.Object.SHA}, {SHA: commit.SHA}},
+		Parents: []*gh.Commit{{SHA: branchRef.Object.SHA}, {SHA: commit.SHA}},
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create commit: %v", err)
 	}
 	// Update target branch reference
-	reference, response, err := c.client.Git.UpdateRef(ctx, repoOpt.Owner, repoOpt.Repo, &github.Reference{
-		Ref: github.String(fmt.Sprintf("refs/heads/%s", opt.Branch)),
-		Object: &github.GitObject{
+	reference, response, err := c.client.Git.UpdateRef(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Reference{
+		Ref: gh.String(fmt.Sprintf("refs/heads/%s", opt.Branch)),
+		Object: &gh.GitObject{
 			SHA: createCommit.SHA,
 		},
 	},
