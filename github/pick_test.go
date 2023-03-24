@@ -7,11 +7,11 @@ import (
 
 func TestPickClient_Pick(t *testing.T) {
 	ctx := context.Background()
-	SHA := "9f320ef77b4a8818bf48a7c28a93f9e2faeecdc7"
+	SHA := "696b3168704d0d5b811d80615b3e1a6a31b2d2a5"
 	Branch := "release/23.04"
 	token := ""
 	client := NewClient(context.Background(), token)
-	err := client.Pick(ctx, "",
+	err := client.Pick(ctx, "kentio/test_cherry_pick",
 		&PickOption{SHA: SHA, Branch: Branch})
 	t.Logf("err: %v", err)
 }

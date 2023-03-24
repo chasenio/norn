@@ -17,13 +17,17 @@ var (
 
 func newApp() *cli.App {
 	cli.VersionPrinter = func(c *cli.Context) {
-		fmt.Fprintf(c.App.Writer, "version: %s\n"+"Git Commit: %s\n"+"Build Time: %s\n"+"Build %s\n",
+		fmt.Fprintf(c.App.Writer,
+			"version: %s\n"+
+				"Git Commit: %s\n"+
+				"Build Time: %s\n"+
+				"Build %s\n",
 			c.App.Version, GitCommit, BuildTime, BuildNumber)
 	}
 	return &cli.App{
 		Name:    "Norns",
 		Version: Version,
-		Usage:   "Norns is a CLI tool for cherry-picking commits from one branch to another",
+		Usage:   "Norns is a CLI tool for cherry-picking commits from one ref to another",
 		Commands: []*cli.Command{
 			cmd.NewPickCommand(),
 		},

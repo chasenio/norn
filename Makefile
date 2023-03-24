@@ -3,6 +3,7 @@
 NAME=norn
 BINDIR=bin
 BUILDTIME ?= $(shell date +%Y-%m-%d_%I:%M:%S)
+GITCOMMIT ?= $(shell git rev-parse -q HEAD)
 VERSION ?= $(shell git describe --tags --always --dirty)
 
 LDFLAGS = -extldflags \
@@ -17,9 +18,10 @@ GOBUILD=CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)"
 PLATFORM_LIST = \
 	linux-amd64 \
 	linux-arm64 \
-	darwin-amd64
+	darwin-amd64 \
+	windows-amd64
 
-all: linux-amd64 linux-arm64 darwin-amd64
+all: linux-amd64 linux-arm64 darwin-amd64 windows-amd64
 
 build:
 	go build -o bin/norns -ldflags "$(LDFLAGS)"
@@ -32,6 +34,9 @@ linux-amd64:
 
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
+
+windows-amd64:
+	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(BINDIR)/$(NAME)-$@.exe
 
 lint:
 	GOOS=darwin golangci-lint run ./...
