@@ -16,7 +16,7 @@ func NewPickCommand() *cli.Command {
 				Usage:    "Path to the git repo",
 				Aliases:  []string{"p"},
 				Required: false,
-				Value:    ".pick.yaml",
+				Value:    ".cherry-pick-path.yml",
 			},
 			&cli.StringFlag{
 				Name:    "vendor",
