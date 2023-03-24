@@ -5,6 +5,7 @@ import (
 	"fmt"
 	gh "github.com/google/go-github/v50/github"
 	"github.com/kentio/norn/types"
+	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -28,11 +29,14 @@ func (s *ReferenceService) Get(ctx context.Context, opt *types.GetRefOption) (*t
 	if err != nil {
 		return nil, err
 	}
+	logrus.Debugf("Get Reference Opt: %+v", opt)
 
-	branchRef, _, err := s.client.Git.GetRef(ctx, repoOpt.Owner, repoOpt.Repo, opt.Ref)
+	branchRef, response, err := s.client.Git.GetRef(ctx, repoOpt.Owner, repoOpt.Repo, opt.Ref)
 	if err != nil {
+		logrus.Debugf("Get Reference Response: %+v", response)
 		return nil, fmt.Errorf("get reference failed: %v", err)
 	}
+	logrus.Debugf("Get Reference: %+v", *branchRef)
 	return newBranch(branchRef), nil
 }
 
@@ -44,7 +48,7 @@ func (s *ReferenceService) Find(ctx context.Context, opts *types.FindOptions) ([
 	return nil, nil
 }
 
-func (s *ReferenceService) Create(ctx context.Context, opts *types.CreateOptions) (*types.Reference, error) {
+func (s *ReferenceService) Create(ctx context.Context, opt *types.CreateOptions) (*types.Reference, error) {
 	return nil, nil
 }
 
@@ -56,24 +60,25 @@ func (s *ReferenceService) Update(ctx context.Context, opt *types.UpdateOption) 
 	if err != nil {
 		return nil, err
 	}
-
+	logrus.Debugf("Update Reference Opt: %+v", opt)
 	ref, response, err := s.client.Git.UpdateRef(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Reference{
 		Ref: gh.String(opt.Ref),
 		Object: &gh.GitObject{
 			SHA: gh.String(opt.SHA),
 		},
 	}, false)
-
+	logrus.Debugf("Update Reference Response: %+v", response)
 	if err != nil {
 		return nil, fmt.Errorf("update reference failed: %v", err)
 	}
 	if response.StatusCode == http.StatusUnprocessableEntity {
 		return nil, fmt.Errorf("reference: %v", *ref.Ref)
 	}
+	logrus.Debugf("Update Reference: %+v", *ref)
 	return &types.Reference{Ref: *ref.Ref}, nil
 }
 
-func (s *ReferenceService) Delete(ctx context.Context, opts *types.DeleteOptions) error {
+func (s *ReferenceService) Delete(ctx context.Context, opt *types.DeleteOptions) error {
 	return nil
 }
 

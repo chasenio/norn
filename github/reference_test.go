@@ -19,5 +19,5 @@ func TestReferenceService_Get(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	t.Logf("reference: %v", reference)
+	t.Logf("reference: %+v", reference)
 }

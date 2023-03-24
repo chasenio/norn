@@ -3,6 +3,7 @@
 NAME=norn
 BINDIR=bin
 BUILDTIME ?= $(shell date +%Y-%m-%d_%I:%M:%S)
+GITCOMMIT ?= $(shell git rev-parse -q HEAD)
 VERSION ?= $(shell git describe --tags --always --dirty)
 
 LDFLAGS = -extldflags \

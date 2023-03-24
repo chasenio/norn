@@ -49,11 +49,12 @@ func (s *CommitService) Get(ctx context.Context, opt *types.GetCommitOption) (ty
 	if err != nil {
 		return nil, err
 	}
+	logrus.Debugf("Get Commit Opt: %+v", *opt)
 	commit, response, err := s.client.Repositories.GetCommit(ctx, repoOpt.Owner, repoOpt.Repo, opt.SHA, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get commit: %v", err)
 	}
-	logrus.Infof("response: %v", response)
+	logrus.Debugf("Get Commit Response: %+v", *response)
 	return newCommit(commit), nil
 }
 
@@ -67,7 +68,7 @@ func (s *CommitService) Create(ctx context.Context, opt *types.CreateCommitOptio
 	}
 
 	var parents []*gh.Commit
-
+	logrus.Debugf("Create Commit Opt: %+v", *opt)
 	for _, p := range opt.Parents {
 		parents = append(parents, &gh.Commit{
 			SHA: gh.String(p),

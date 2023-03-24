@@ -33,5 +33,5 @@ func TestCommitService_Get(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	t.Logf("commit: %v", commit)
+	t.Logf("commit: %+v", commit)
 }
