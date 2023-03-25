@@ -33,6 +33,7 @@ func newApp() *cli.App {
 		},
 		Before: func(context *cli.Context) error {
 			debug := os.Getenv("NORN_DEBUG")
+			logrus.SetLevel(logrus.DebugLevel)
 			if debug != "" {
 				logrus.SetLevel(logrus.DebugLevel)
 			}

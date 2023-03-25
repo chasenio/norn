@@ -51,6 +51,7 @@ func NewPickCommand() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
+			logrus.Debugf("Start picking commits")
 			ctx := context.Background()
 			profile, err := NewProfile(c.String("path"))
 			if err != nil {
