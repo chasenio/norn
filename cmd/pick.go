@@ -3,8 +3,7 @@ package cmd
 import (
 	"context"
 	"github.com/kentio/norn/feature"
-	"github.com/kentio/norn/github"
-	"github.com/kentio/norn/types"
+	"github.com/kentio/norn/global"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -47,7 +46,17 @@ func NewPickCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:     "for",
 				Usage:    "Pick commits for a specific branch",
+				Required: false,
+			},
+			&cli.StringFlag{
+				Name:     "merge-request-id",
+				Usage:    "The merge request id",
 				Required: true,
+			},
+			&cli.BoolFlag{
+				Name:  "is-summary",
+				Usage: "Add Cherry-pick summary to the merge request",
+				Value: false,
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -58,14 +67,14 @@ func NewPickCommand() *cli.Command {
 				return cli.Exit(err.Error(), 1)
 			}
 
-			vendor, token := c.String("vendor"), c.String("token")
-			logrus.Debugf("Vendor: %s, Token: %s", vendor, token)
+			vendor, token, mrId := c.String("vendor"), c.String("token"), c.String("merge-request-id")
+			logrus.Debugf("Vendor: %s, Token: %s Merge Request ID: %s", vendor, token, mrId)
 
 			if vendor == "" || token == "" {
 				return cli.Exit("Vendor or token is empty", 1)
 			}
 
-			provider, err := NewProvider(ctx, vendor, token)
+			provider, err := global.NewProvider(ctx, vendor, token)
 			if err != nil {
 				return cli.Exit("Unknown provider", 1)
 			}
@@ -73,53 +82,26 @@ func NewPickCommand() *cli.Command {
 			repo, from := c.String("repo"), c.String("for")
 			logrus.Debugf("Repo: %s, From: %s", repo, from)
 
-			if repo == "" || from == "" {
+			if repo == "" {
 				return cli.Exit("Repo is empty", 1)
 			}
 
-			launchPick := false
-
-			logrus.Debugf("Branchs: %s", profile.Branches)
-
-			// Pick commits from one branch to another
-			for _, branch := range profile.Branches {
-				logrus.Debugf("Branch: %s", branch)
-				if branch == from {
-					logrus.Debugf("Launch pick: %s", branch)
-					launchPick = true
-					continue // skip the branch, and pick commits from the next branch
-				}
-				if !launchPick {
-					logrus.Debugf("Skip pick: %s", branch)
-					continue
-				}
-
-				logrus.Debugf("Picking %s to %s", c.String("sha"), branch)
-				// Pick commits
-				pickOption := &feature.PickOption{
-					SHA:    c.String("sha"),
-					Repo:   repo,
-					Target: branch,
-				}
-				err := feature.Pick(ctx, provider, pickOption)
+			sha, isSummary := c.String("sha"), c.Bool("is-summary")
+			logrus.Debugf("SHA: %s, IsSummary: %t", sha, isSummary)
+			if profile.Branches != nil {
+				_, _, err := feature.DoPickToBranchesFromMergeRequest(ctx, provider, &feature.PickToRefMROpt{
+					Repo:           repo,
+					Branches:       profile.Branches,
+					Form:           from,
+					SHA:            sha,
+					MergeRequestID: mrId,
+					IsSummaryTask:  isSummary,
+				})
 				if err != nil {
 					return cli.Exit(err.Error(), 1)
 				}
-				logrus.Infof("Picked %s to %s", pickOption.SHA, pickOption.Target)
 			}
 			return nil
 		},
-	}
-}
-
-// NewProvider NewClient returns a new client for the given vendor.
-func NewProvider(ctx context.Context, vendor string, token string) (types.Provider, error) {
-	logrus.Debugf("New provider: %s", vendor)
-
-	switch vendor {
-	case "gh":
-		return github.NewProvider(ctx, token)
-	default:
-		return nil, types.ErrUnknownProvider
 	}
 }
