@@ -1,6 +1,8 @@
 
 
+```shell
 norn pick -v <vendor> -r <repo> -s <sha> --token <token> --for <source ref>
+```
 
 ```yaml
 branches:
