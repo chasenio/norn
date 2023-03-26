@@ -13,7 +13,7 @@ func NewProvider(ctx context.Context, vendor string, token string) (types.Provid
 
 	switch vendor {
 	case "gh", "github":
-		return github.NewProvider(ctx, token)
+		return github.NewProvider(ctx, token), nil
 	default:
 		return nil, types.ErrUnknownProvider
 	}

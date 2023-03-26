@@ -7,15 +7,12 @@ const (
 const (
 	CherryPickTaskSummaryTemplate = "" +
 		"Will be cherry-picked to the following branches:\n\n" +
-		"---\n" +
 		"{{ .Message }}\n\n" +
 		CherryPickSummaryFlag
 	CherryPickTaskDoneTemplate = "" +
 		"Cherry-picked to the following branches:\n\n" +
-		"---\n" +
 		"{{ .Message }}\n\n"
 	CherryPickTaskFailedTemplate = "" +
 		"Cherry-pick failed to the following branches:\n\n" +
-		"---\n" +
 		"{{ .Message }}\n\n"
 )

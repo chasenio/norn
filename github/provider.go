@@ -16,7 +16,7 @@ type Provider struct {
 	commentService      *CommentService
 }
 
-func NewProvider(ctx context.Context, token string) (*Provider, error) {
+func NewProvider(ctx context.Context, token string) *Provider {
 	client := NewGithubClient(ctx, token)
 	return &Provider{
 		ProviderID:          "github",
@@ -24,7 +24,7 @@ func NewProvider(ctx context.Context, token string) (*Provider, error) {
 		referenceService:    NewReferenceService(client),
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
-	}, nil
+	}
 }
 
 func (p *Provider) Commit() types.CommitService {
