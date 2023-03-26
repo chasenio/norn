@@ -11,17 +11,66 @@ import (
 
 func TestPick(t *testing.T) {
 	ctx := context.Background()
-	provider, _ := github.NewProvider(ctx, "")
+	provider := github.NewProvider(ctx, "")
+	pickOpt := &PickToRefMROpt{
+		Repo: "kentio/norn",
+		Branches: []string{
+			"release/23.03",
+			"release/23.04",
+			"master",
+		},
+		Form:          "release/23.03",
+		IsSummaryTask: false,
+		SHA:           "",
+	}
+	pick := NewPickFeature(provider, pickOpt.Branches)
 
-	err := Pick(ctx, provider, &PickOption{
-		SHA:    "696b3168704d0d5b811d80615b3e1a6a31b2d2a5",
-		Repo:   "",
+	err := pick.DoPick(ctx, &PickOption{
+		SHA:    pickOpt.SHA,
+		Repo:   pickOpt.Repo,
 		Target: "master"})
 
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
 	t.Logf("err: %v", err)
+}
+
+func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
+	logrus.SetLevel(logrus.DebugLevel)
+	ctx := context.Background()
+	provider := github.NewProvider(ctx, "")
+	pickOpt := &PickToRefMROpt{
+		Repo: "kentio/test_cherry_pick",
+		Branches: []string{
+			"release/23.03",
+			"release/23.04",
+			"master",
+		},
+		Form:           "release/23.03",
+		IsSummaryTask:  false,
+		SHA:            "",
+		MergeRequestID: "54",
+	}
+	pick := NewPickFeature(provider, pickOpt.Branches)
+	// Is Exist
+	result, err := pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if !result {
+		t.Fatalf("err: %v", err)
+	}
+
+	pickOpt.MergeRequestID = "45"
+	// Is Not Exist
+	result, err = pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if result {
+		t.Fatalf("err: %v", err)
+	}
 }
 
 func TestParseSelectedBranches(t *testing.T) {
@@ -57,15 +106,21 @@ func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
 	token := ""
 	provider, _ := global.NewProvider(ctx, "github", token)
 
+	pickOpt := &PickToRefMROpt{
+		Repo: "kentio/norn",
+		Branches: []string{
+			"release/23.03",
+			"release/23.04",
+			"master",
+		},
+		Form:          "release/23.03",
+		IsSummaryTask: false,
+		SHA:           "",
+	}
+	pick := NewPickFeature(provider, pickOpt.Branches)
+
 	// test is summary task
-	done, faild, err := DoPickToBranchesFromMergeRequest(ctx, provider, &PickToRefMROpt{
-		Repo:           "kentio/test_cherry_pick",
-		Branches:       []string{"master", "dev"},
-		Form:           "release/23.03",
-		SHA:            "xxx",
-		MergeRequestID: "53",
-		IsSummaryTask:  true,
-	})
+	done, faild, err := pick.DoPickToBranchesFromMergeRequest(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -124,7 +179,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 func TestNewCommentContent(t *testing.T) {
 	branches := []string{"master", "dev"}
 
-	taskSummaryResult, err := NewCommentContent(global.CherryPickTaskSummaryTemplate, branches)
+	taskSummaryResult, err := NewSelectComment(global.CherryPickTaskSummaryTemplate, branches)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -136,7 +191,7 @@ func TestNewCommentContent(t *testing.T) {
 	}
 
 	// test Done template
-	doneResult, err := NewCommentContent(global.CherryPickTaskDoneTemplate, branches)
+	doneResult, err := NewSelectComment(global.CherryPickTaskDoneTemplate, branches)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -148,7 +203,7 @@ func TestNewCommentContent(t *testing.T) {
 	}
 
 	// test Failed template
-	failedResult, err := NewCommentContent(global.CherryPickTaskFailedTemplate, branches)
+	failedResult, err := NewSelectComment(global.CherryPickTaskFailedTemplate, branches)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}

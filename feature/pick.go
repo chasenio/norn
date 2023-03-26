@@ -10,6 +10,11 @@ import (
 	"text/template"
 )
 
+type PickFeature struct {
+	provider types.Provider
+	branches []string
+}
+
 type PickOption struct {
 	SHA    string
 	Repo   string
@@ -31,13 +36,17 @@ type PickToRefMROpt struct {
 	IsSummaryTask  bool
 }
 
-func Pick(ctx context.Context, provider types.Provider, opt *PickOption) error {
-	if provider == nil || opt == nil {
+func NewPickFeature(provider types.Provider, branches []string) *PickFeature {
+	return &PickFeature{provider: provider, branches: branches}
+}
+
+func (pick *PickFeature) DoPick(ctx context.Context, opt *PickOption) error {
+	if pick.provider == nil || opt == nil {
 		return ErrInvalidOptions
 	}
 
 	// 1. get reference
-	reference, err := provider.Reference().Get(ctx, &types.GetRefOption{
+	reference, err := pick.provider.Reference().Get(ctx, &types.GetRefOption{
 		Repo: opt.Repo,
 		Ref:  fmt.Sprintf("refs/heads/%s", opt.Target),
 	})
@@ -46,7 +55,7 @@ func Pick(ctx context.Context, provider types.Provider, opt *PickOption) error {
 	}
 
 	// 2. get commit
-	commit, err := provider.Commit().Get(ctx, &types.GetCommitOption{
+	commit, err := pick.provider.Commit().Get(ctx, &types.GetCommitOption{
 		Repo: opt.Repo,
 		SHA:  opt.SHA,
 	})
@@ -55,7 +64,7 @@ func Pick(ctx context.Context, provider types.Provider, opt *PickOption) error {
 	}
 
 	// 2.1 if last commit message is same as pick message, skip
-	lastCommit, err := provider.Commit().Get(ctx, &types.GetCommitOption{Repo: opt.Repo, SHA: reference.SHA})
+	lastCommit, err := pick.provider.Commit().Get(ctx, &types.GetCommitOption{Repo: opt.Repo, SHA: reference.SHA})
 	if err != nil {
 		logrus.Debugf("failed to get last commit: %+v", err)
 		return err
@@ -71,7 +80,7 @@ func Pick(ctx context.Context, provider types.Provider, opt *PickOption) error {
 		return nil
 	}
 	// 3. create commit
-	createCommit, err := provider.Commit().Create(ctx, &types.CreateCommitOption{
+	createCommit, err := pick.provider.Commit().Create(ctx, &types.CreateCommitOption{
 		Repo:        opt.Repo,
 		Tree:        commit.Tree(),
 		SHA:         commit.SHA(),
@@ -86,7 +95,7 @@ func Pick(ctx context.Context, provider types.Provider, opt *PickOption) error {
 	}
 
 	// 4. update reference
-	_, err = provider.Reference().Update(ctx, &types.UpdateOption{
+	_, err = pick.provider.Reference().Update(ctx, &types.UpdateOption{
 		Repo: opt.Repo,
 		Ref:  fmt.Sprintf("refs/heads/%s", opt.Target),
 		SHA:  createCommit.SHA(),
@@ -99,39 +108,70 @@ func Pick(ctx context.Context, provider types.Provider, opt *PickOption) error {
 	return nil
 }
 
-// DoPickToBranchesFromMergeRequest Pick commits from one branch to another
-func DoPickToBranchesFromMergeRequest(ctx context.Context, provider types.Provider, do *PickToRefMROpt) (done []string, failed []string, err error) {
+// DoPickSummaryComment submit pick summary comment
+func (pick *PickFeature) DoPickSummaryComment(ctx context.Context, do *PickToRefMROpt) error {
+	// Check if the comment is already submitted
+	if isExties, err := pick.IsInMergeRequestComments(ctx, do.Repo, do.MergeRequestID); err != nil {
+		logrus.Debugf("IsInMergeRequestComments failed: %+v", err)
+		return err
+	} else if isExties {
+		logrus.Infof("Summary comment already exists, exit")
+		return nil
+	}
 
-	logrus.Debugf("Branches: %s", do.Branches)
+	// generate branch list
+	var summaryBranches []string
+	var startFlag bool
+	for _, branch := range do.Branches {
+		if startFlag {
+			summaryBranches = append(summaryBranches, branch)
+			continue
+		}
+		// 按照路径顺序， 在前面的被将被跳过
+		logrus.Debugf("before branch: %s, form: %s ; skip", branch, do.Form)
+		if branch == do.Form {
+			startFlag = true
+		}
 
-	if do.IsSummaryTask {
-		// Add Comment to merge request
-		logrus.Infof("Add comment to merge request")
-		// generate comment
-		logrus.Debugf("Generate comment")
-		summaryComment, err := NewMergeReqeustComment(do.IsSummaryTask, &MergeCommentOpt{branches: do.Branches})
-		if err != nil {
-			return nil, nil, err
-		}
-		// submit comment
-		_, err = provider.Comment().Create(ctx, &types.CreateCommentOption{
-			MergeRequestID: do.MergeRequestID,
-			Body:           summaryComment,
-			Repo:           do.Repo,
-		},
-		)
-		logrus.Debugf("Comment: %s", summaryComment)
-		if err != nil {
-			return nil, nil, err
-		}
+	}
+	logrus.Debugf("Summary branches: %+v", summaryBranches)
+
+	// generate comment
+	logrus.Debugf("Generate summary comment")
+	summaryComment, err := NewMergeReqeustComment(do.IsSummaryTask, &MergeCommentOpt{branches: summaryBranches})
+	if err != nil {
+		return err
+	}
+	logrus.Infof("Submit summary comment: %s", summaryComment)
+	// submit comment
+	_, err = pick.provider.Comment().Create(ctx, &types.CreateCommentOption{
+		MergeRequestID: do.MergeRequestID,
+		Body:           summaryComment,
+		Repo:           do.Repo,
+	},
+	)
+	if err != nil {
+		return err
+	}
+	logrus.Infof("Success to submit summary comment")
+	return nil
+}
+
+// DoPickToBranchesFromMergeRequest DoPick commits from one branch to another
+func (pick *PickFeature) DoPickToBranchesFromMergeRequest(ctx context.Context, do *PickToRefMROpt) (done []string, failed []string, err error) {
+
+	comments, err := pick.provider.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: do.MergeRequestID, Repo: do.Repo})
+
+	if !IsInMergeRequestComments(comments) {
+		logrus.Infof("No pick comment")
 		return nil, nil, nil
 	}
-	logrus.Debugf("Pick commits from %s to %s", do.Form, do.Branches)
+	logrus.Debugf("Start to pick ...")
 
 	// 获取选中的需要pick的分支
-	selectedBranches, err := GetSelectedRefByMergeReqeust(ctx, provider, do.Repo, do.MergeRequestID)
+	selectedBranches, err := pick.GetSelectedRefByMergeReqeust(ctx, do.Repo, do.MergeRequestID)
 	if err != nil {
-		logrus.Debugf("GetSelectedRefByMergeReqeust failed: %+v", err)
+		logrus.Debugf("Get Select Ref failed: %+v", err)
 		return nil, nil, err
 	}
 
@@ -143,7 +183,7 @@ func DoPickToBranchesFromMergeRequest(ctx context.Context, provider types.Provid
 	logrus.Infof("Selected branches: %s", selectedBranches)
 
 	launchPick := false
-	// Pick commits from one branch to another
+	// DoPick commits from one branch to another
 	for _, branch := range selectedBranches {
 		logrus.Debugf("Branch: %s", branch)
 		if branch == do.Form {
@@ -163,13 +203,13 @@ func DoPickToBranchesFromMergeRequest(ctx context.Context, provider types.Provid
 		}
 
 		logrus.Debugf("Picking %s to %s", do.SHA, branch)
-		// Pick commits
+		// DoPick commits
 		pickOption := &PickOption{
 			SHA:    do.SHA,
 			Repo:   do.Repo,
 			Target: branch,
 		}
-		err = Pick(ctx, provider, pickOption)
+		err = pick.DoPick(ctx, pickOption)
 		if err != nil {
 			failed = append(failed, branch)
 			continue
@@ -194,7 +234,7 @@ func DoPickToBranchesFromMergeRequest(ctx context.Context, provider types.Provid
 	}
 
 	// submit pick result to merge request
-	_, err = provider.Comment().Create(ctx, &types.CreateCommentOption{
+	_, err = pick.provider.Comment().Create(ctx, &types.CreateCommentOption{
 		Repo:           do.Repo,
 		MergeRequestID: do.MergeRequestID,
 		Body:           pickResultComment,
@@ -206,9 +246,9 @@ func DoPickToBranchesFromMergeRequest(ctx context.Context, provider types.Provid
 }
 
 // GetSelectedRefByMergeReqeust get selected reference by merge request
-func GetSelectedRefByMergeReqeust(ctx context.Context, p types.Provider, repo string, mergeRequestID string) (selectedBranches []string, err error) {
+func (pick *PickFeature) GetSelectedRefByMergeReqeust(ctx context.Context, repo string, mergeRequestID string) (selectedBranches []string, err error) {
 	// get merge request comments
-	comments, err := p.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
+	comments, err := pick.provider.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
 	if err != nil {
 		logrus.Debugf("Get merge request comments failed: %s", err)
 		return nil, err
@@ -223,6 +263,25 @@ func GetSelectedRefByMergeReqeust(ctx context.Context, p types.Provider, repo st
 		}
 	}
 	return nil, nil
+}
+
+func (pick *PickFeature) IsInMergeRequestComments(ctx context.Context, repo string, mergeRequestID string) (bool, error) {
+	comments, err := pick.provider.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
+	if err != nil {
+		logrus.Debugf("Get merge request comments failed: %s", err)
+		return false, err
+	}
+	return IsInMergeRequestComments(comments), nil
+}
+
+// IsInMergeRequestComments check if comment is in merge request
+func IsInMergeRequestComments(comments []types.Comment) bool {
+	for _, c := range comments {
+		if strings.Contains(c.Body(), global.CherryPickSummaryFlag) {
+			return true
+		}
+	}
+	return false
 }
 
 // ParseSelectedBranches parse selected branches from comment
@@ -244,7 +303,7 @@ func ParseSelectedBranches(comment string) (selectedBranches []string) {
 // NewMergeReqeustComment generate comment for merge request
 func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary string, err error) {
 	if isSummary {
-		taskBranchLine, err := NewCommentContent(global.CherryPickTaskSummaryTemplate, opt.branches)
+		taskBranchLine, err := NewSelectComment(global.CherryPickTaskSummaryTemplate, opt.branches)
 		if err != nil {
 			return "", fmt.Errorf("failed to execute template: %w", err)
 		}
@@ -255,7 +314,7 @@ func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary strin
 	// render done summary
 	if len(opt.done) > 0 {
 		logrus.Debugf("render done summary: %s", opt.done)
-		taskBranchLine, err := NewCommentContent(global.CherryPickTaskDoneTemplate, opt.done)
+		taskBranchLine, err := NewItemComment(global.CherryPickTaskDoneTemplate, opt.done)
 		if err != nil {
 			return "", fmt.Errorf("failed to execute template: %w", err)
 		}
@@ -266,7 +325,7 @@ func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary strin
 	if len(opt.failed) > 0 {
 
 		logrus.Debugf("render failed summary: %s", opt.failed)
-		taskBranchLine, err := NewCommentContent(global.CherryPickTaskFailedTemplate, opt.failed)
+		taskBranchLine, err := NewItemComment(global.CherryPickTaskFailedTemplate, opt.failed)
 		if err != nil {
 			return "", fmt.Errorf("failed to execute template: %w", err)
 		}
@@ -288,14 +347,35 @@ func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary strin
 	return summary, nil
 }
 
-// NewCommentContent generate comment content
-func NewCommentContent(layout string, branches []string) (content strings.Builder, err error) {
+// NewSelectComment generate comment content
+func NewSelectComment(layout string, branches []string) (content strings.Builder, err error) {
 	var taskBranchLine strings.Builder
 	type Msg struct {
 		Message string `json:"message"`
 	}
 	for _, branch := range branches {
 		taskBranchLine.WriteString("- [x] " + branch + "\n")
+	}
+	tpl := template.Must(template.New("message").Parse(layout))
+	data := Msg{
+		Message: taskBranchLine.String(),
+	}
+	err = tpl.Execute(&content, data)
+	if err != nil {
+		logrus.Debugf("Failed to execute template: %s \n branches: %s", layout, branches)
+		return content, fmt.Errorf("failed to execute template: %w", err)
+	}
+	return content, nil
+}
+
+// NewItemComment generate comment content
+func NewItemComment(layout string, branches []string) (content strings.Builder, err error) {
+	var taskBranchLine strings.Builder
+	type Msg struct {
+		Message string `json:"message"`
+	}
+	for _, branch := range branches {
+		taskBranchLine.WriteString("- " + branch + "\n")
 	}
 	tpl := template.Must(template.New("message").Parse(layout))
 	data := Msg{

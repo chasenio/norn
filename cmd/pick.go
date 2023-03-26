@@ -45,7 +45,7 @@ func NewPickCommand() *cli.Command {
 			},
 			&cli.StringFlag{
 				Name:     "for",
-				Usage:    "Pick commits for a specific branch",
+				Usage:    "DoPick commits for a specific branch",
 				Required: false,
 			},
 			&cli.StringFlag{
@@ -88,15 +88,32 @@ func NewPickCommand() *cli.Command {
 
 			sha, isSummary := c.String("sha"), c.Bool("is-summary")
 			logrus.Debugf("SHA: %s, IsSummary: %t", sha, isSummary)
+
+			pick := feature.NewPickFeature(provider, profile.Branches)
+
+			pickOpt := &feature.PickToRefMROpt{
+				Repo:           repo,
+				Branches:       profile.Branches,
+				Form:           from,
+				SHA:            sha,
+				MergeRequestID: mrId,
+				IsSummaryTask:  isSummary,
+			}
+
+			/*
+				TODO Command 和 Backend 之间的场景不太一样
+				 	Command是具体指令，而Backend需要Context
+			*/
+			if isSummary {
+				// Add cherry-pick summary to the merge request
+				if err := pick.DoPickSummaryComment(ctx, pickOpt); err != nil {
+					return cli.Exit(err.Error(), 1)
+				}
+				return cli.Exit("", 0)
+			}
+
 			if profile.Branches != nil {
-				_, _, err := feature.DoPickToBranchesFromMergeRequest(ctx, provider, &feature.PickToRefMROpt{
-					Repo:           repo,
-					Branches:       profile.Branches,
-					Form:           from,
-					SHA:            sha,
-					MergeRequestID: mrId,
-					IsSummaryTask:  isSummary,
-				})
+				_, _, err := pick.DoPickToBranchesFromMergeRequest(ctx, pickOpt)
 				if err != nil {
 					return cli.Exit(err.Error(), 1)
 				}
