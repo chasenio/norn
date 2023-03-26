@@ -22,7 +22,7 @@ PLATFORM_LIST = \
 	darwin-arm64 \
 	windows-amd64
 
-all: linux-amd64 linux-arm64 darwin-amd64 windows-amd64
+all: linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64
 
 build:
 	go build -o bin/norns -ldflags "$(LDFLAGS)"

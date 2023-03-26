@@ -184,6 +184,10 @@ func (pick *PickFeature) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 
 	// DoPick commits from one branch to another
 	for _, branch := range selectedBranches {
+		if branch == do.Form {
+			logrus.Debugf("Skip form branch: %s", branch)
+			continue // skip the branch, and pick commits from the next branch
+		}
 		logrus.Debugf("Branch: %s", branch)
 
 		// if select branch not in defined branches, skip
