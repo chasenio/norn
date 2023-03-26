@@ -40,6 +40,7 @@ jobs:
       - name: Build binary
         run: |
           make -j releases
+          ls -lash bin
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
