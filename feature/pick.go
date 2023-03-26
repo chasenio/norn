@@ -123,15 +123,15 @@ func (pick *PickFeature) DoPickSummaryComment(ctx context.Context, do *PickToRef
 	var summaryBranches []string
 	var startFlag bool
 	for _, branch := range do.Branches {
+		// 按照路径顺序， 在前面的被将被跳过
+		if branch == do.Form {
+			startFlag = true
+		}
 		if startFlag {
 			summaryBranches = append(summaryBranches, branch)
 			continue
 		}
-		// 按照路径顺序， 在前面的被将被跳过
 		logrus.Debugf("before branch: %s, form: %s ; skip", branch, do.Form)
-		if branch == do.Form {
-			startFlag = true
-		}
 
 	}
 	logrus.Debugf("Summary branches: %+v", summaryBranches)
@@ -182,19 +182,9 @@ func (pick *PickFeature) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 
 	logrus.Infof("Selected branches: %s", selectedBranches)
 
-	launchPick := false
 	// DoPick commits from one branch to another
 	for _, branch := range selectedBranches {
 		logrus.Debugf("Branch: %s", branch)
-		if branch == do.Form {
-			logrus.Debugf("Launch pick: %s", branch)
-			launchPick = true
-			continue // skip the branch, and pick commits from the next branch
-		}
-		if !launchPick {
-			logrus.Debugf("Skip pick: %s", branch)
-			continue
-		}
 
 		// if select branch not in defined branches, skip
 		if !global.StringInSlice(branch, do.Branches) {
