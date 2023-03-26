@@ -19,6 +19,7 @@ PLATFORM_LIST = \
 	linux-amd64 \
 	linux-arm64 \
 	darwin-amd64 \
+	darwin-arm64 \
 	windows-amd64
 
 all: linux-amd64 linux-arm64 darwin-amd64 windows-amd64
@@ -34,6 +35,9 @@ linux-amd64:
 
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
+
+darwin-arm64:
+	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
 
 windows-amd64:
 	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(BINDIR)/$(NAME)-$@.exe
