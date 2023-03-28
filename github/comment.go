@@ -41,10 +41,17 @@ func (s *CommentService) Create(ctx context.Context, opt *types.CreateCommentOpt
 		repoOpt.Repo, mergeId,
 		&gh.IssueComment{
 			Body: gh.String(opt.Body),
+			User: &gh.User{
+				Name:  gh.String("github-action[bot]"),
+				Email: gh.String("github-actions[bot]@users.noreply.github.com"),
+			},
 		})
-	logrus.Debugf("Add Comment Response: %+v", *response)
+	logrus.Debugf("Add Comment Response: %+v", response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add comment: %v", err)
+	}
+	if response.StatusCode != 201 {
+		return nil, fmt.Errorf("failed to add comment: %v", response.Status)
 	}
 	logrus.Debugf("Add Comment : %+v", *prComment)
 	return newIssueComment(prComment), nil

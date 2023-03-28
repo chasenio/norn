@@ -13,7 +13,7 @@ func TestPullRequestService_FindComment(t *testing.T) {
 	token := ""
 	repo := "kentio/test_cherry_pick"
 	mergeId := "53"
-	client, _ := NewProvider(ctx, token)
+	client := NewProvider(ctx, token)
 
 	comments, err := client.Comment().Find(ctx, &types.FindCommentOption{Repo: repo, MergeRequestID: mergeId})
 	if err != nil {
@@ -36,13 +36,16 @@ branches:
  - [ ] release/23.04
  - [ ] master
 `
-	err, _ := commentService.Create(ctx, &types.CreateCommentOption{
+	comment, err := commentService.Create(ctx, &types.CreateCommentOption{
 		Repo:           "kentio/test_cherry_pick",
 		Body:           commentString,
-		MergeRequestID: "53",
+		MergeRequestID: "58",
 	})
 	if err != nil {
 		t.Fatalf("err: %v", err)
+	}
+	if comment.Body() != commentString {
+		t.Fatalf("comment body not equal")
 	}
 	t.Logf("add comment success")
 }
