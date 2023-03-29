@@ -126,6 +126,7 @@ func (pick *PickFeature) DoPickSummaryComment(ctx context.Context, do *PickToRef
 		// 按照路径顺序， 在前面的被将被跳过
 		if branch == do.Form {
 			startFlag = true
+			continue
 		}
 		if startFlag {
 			summaryBranches = append(summaryBranches, branch)
@@ -135,6 +136,10 @@ func (pick *PickFeature) DoPickSummaryComment(ctx context.Context, do *PickToRef
 
 	}
 	logrus.Debugf("Summary branches: %+v", summaryBranches)
+	if len(summaryBranches) == 0 {
+		logrus.Infof("No summary branches, exit")
+		return nil
+	}
 
 	// generate comment
 	logrus.Debugf("Generate summary comment")
