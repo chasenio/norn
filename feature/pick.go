@@ -87,7 +87,6 @@ func (pick *PickFeature) DoPick(ctx context.Context, opt *PickOption) error {
 		PickMessage: pickMessage,
 		Parents: []string{
 			reference.SHA,
-			commit.SHA(),
 		}})
 
 	if err != nil {
@@ -290,6 +289,10 @@ func ParseSelectedBranches(comment string) (selectedBranches []string) {
 		if strings.Contains(line, "- [x]") {
 			line = strings.ReplaceAll(line, "- [x] ", "") // remove "- [x] "
 			line = strings.ReplaceAll(line, " ", "")      // remove " "
+			// remove enter
+			line = strings.ReplaceAll(line, "\r", "")
+			line = strings.ReplaceAll(line, "\n", "")
+
 			if line == "" {
 				continue
 			}

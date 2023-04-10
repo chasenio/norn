@@ -9,19 +9,43 @@ import (
 	"testing"
 )
 
-func TestPick(t *testing.T) {
+func TestPickFeature_DoPickSummaryComment(t *testing.T) {
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")
 	pickOpt := &PickToRefMROpt{
-		Repo: "kentio/norn",
+		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
 			"release/23.03",
 			"release/23.04",
 			"master",
 		},
-		Form:          "release/23.03",
-		IsSummaryTask: false,
-		SHA:           "",
+		Form:           "release/23.03",
+		IsSummaryTask:  true,
+		SHA:            "cc382f5c74a879bda50cc5a8a73090ba83068733",
+		MergeRequestID: "60",
+	}
+	pick := NewPickFeature(provider, pickOpt.Branches)
+	err := pick.DoPickSummaryComment(ctx, pickOpt)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	t.Logf("err: %v", err)
+}
+
+func TestPick(t *testing.T) {
+	ctx := context.Background()
+	provider := github.NewProvider(ctx, "")
+	pickOpt := &PickToRefMROpt{
+		Repo: "kentio/test_cherry_pick",
+		Branches: []string{
+			"release/23.03",
+			"release/23.04",
+			"master",
+		},
+		Form:           "release/23.03",
+		IsSummaryTask:  false,
+		SHA:            "9fe34a912edd44ef07052aa1305aea72adee3638",
+		MergeRequestID: "59",
 	}
 	pick := NewPickFeature(provider, pickOpt.Branches)
 
@@ -107,15 +131,16 @@ func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
 	provider, _ := global.NewProvider(ctx, "github", token)
 
 	pickOpt := &PickToRefMROpt{
-		Repo: "kentio/norn",
+		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
 			"release/23.03",
 			"release/23.04",
 			"master",
 		},
-		Form:          "release/23.03",
-		IsSummaryTask: false,
-		SHA:           "",
+		Form:           "release/23.03",
+		IsSummaryTask:  false,
+		SHA:            "a569472376cd1f5ff8403811ceb67b9f809f961f",
+		MergeRequestID: "60",
 	}
 	pick := NewPickFeature(provider, pickOpt.Branches)
 
