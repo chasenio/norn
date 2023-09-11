@@ -69,7 +69,7 @@ func (pick *PickFeature) DoPick(ctx context.Context, opt *PickOption) error {
 		logrus.Debugf("failed to get last commit: %+v", err)
 		return err
 	}
-	pickMessage := fmt.Sprintf("%s\ncherry-pick from commit (%s)", commit.Message(), opt.SHA[:7])
+	pickMessage := fmt.Sprintf("%s\n\ncherry-pick from commit (%s)", commit.Message(), opt.SHA[:7])
 
 	// if match message, skip
 	lastCommitMessageMd5 := sumMd5(lastCommit.Message())
