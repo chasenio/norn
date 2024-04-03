@@ -25,6 +25,7 @@ func NewCommentService(client *gh.Client) *CommentService {
 	}
 }
 
+// Create Comment creates a new comment on the given merge request.
 func (s *CommentService) Create(ctx context.Context, opt *types.CreateCommentOption) (types.Comment, error) {
 	if opt == nil {
 		return nil, types.ErrInvalidOptions
@@ -57,6 +58,7 @@ func (s *CommentService) Create(ctx context.Context, opt *types.CreateCommentOpt
 	return newIssueComment(prComment), nil
 }
 
+// Find Comment finds comments on the given merge request.
 func (s *CommentService) Find(ctx context.Context, opt *types.FindCommentOption) ([]types.Comment, error) {
 	if opt == nil {
 		return nil, types.ErrInvalidOptions

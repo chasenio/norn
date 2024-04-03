@@ -69,7 +69,7 @@ func (c *PickClient) Pick(ctx context.Context, repo string, opt *PickOption) err
 		return fmt.Errorf("failed to get commit: %v", err)
 	}
 
-	// 创建新的提交对象
+	// 创建新提交对象
 	cherryPickMessage := fmt.Sprintf("Cherry-pick from %s\nSource Commit Message:\n%s", *commit.SHA, *commit.Commit.Message)
 	createCommit, _, err := c.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Commit{
 		Message: gh.String(cherryPickMessage),

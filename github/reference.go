@@ -52,6 +52,7 @@ func (s *ReferenceService) Create(ctx context.Context, opt *types.CreateOptions)
 	return nil, nil
 }
 
+// Update updates the reference with the specified options.
 func (s *ReferenceService) Update(ctx context.Context, opt *types.UpdateOption) (*types.Reference, error) {
 	if opt == nil {
 		return nil, types.ErrInvalidOptions

@@ -41,6 +41,7 @@ func NewCommitService(client *gh.Client) *CommitService {
 	}
 }
 
+// Get Commit returns the commit for the given path.
 func (s *CommitService) Get(ctx context.Context, opt *types.GetCommitOption) (types.Commit, error) {
 	if opt == nil {
 		return nil, types.ErrInvalidOptions
@@ -58,6 +59,7 @@ func (s *CommitService) Get(ctx context.Context, opt *types.GetCommitOption) (ty
 	return newCommit(commit), nil
 }
 
+// Create Commit creates a new commit.
 func (s *CommitService) Create(ctx context.Context, opt *types.CreateCommitOption) (types.Commit, error) {
 	if opt == nil {
 		return nil, types.ErrInvalidOptions
