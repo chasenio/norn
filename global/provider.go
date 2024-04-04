@@ -2,7 +2,7 @@ package global
 
 import (
 	"context"
-	"github.com/kentio/norn/github"
+	"github.com/kentio/norn/pkg/github"
 	"github.com/kentio/norn/types"
 	"github.com/sirupsen/logrus"
 )

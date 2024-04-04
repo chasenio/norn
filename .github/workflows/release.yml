@@ -39,7 +39,7 @@ jobs:
 
       - name: Build binary
         run: |
-          make -j releases
+          make -j release
           ls -lash bin
 
       - name: Upload Release

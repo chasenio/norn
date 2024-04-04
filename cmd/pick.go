@@ -2,11 +2,47 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/kentio/norn/feature"
 	"github.com/kentio/norn/global"
+	"github.com/kentio/norn/internal"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"os"
 )
+
+var (
+	BuildTime   = ""
+	BuildNumber = ""
+	GitCommit   = ""
+	Version     = "0.0.1"
+)
+
+func NewApp() *cli.App {
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Fprintf(c.App.Writer,
+			"version: %s\n"+
+				"Git Commit: %s\n"+
+				"Build Time: %s\n"+
+				"Build %s\n",
+			c.App.Version, GitCommit, BuildTime, BuildNumber)
+	}
+	return &cli.App{
+		Name:    "Norns",
+		Version: Version,
+		Usage:   "Norns is a CLI tool for cherry-picking commits from one ref to another",
+		Commands: []*cli.Command{
+			NewPickCommand(),
+		},
+		Before: func(context *cli.Context) error {
+			debug := os.Getenv("NORN_DEBUG")
+			if debug != "" {
+				logrus.SetLevel(logrus.DebugLevel)
+			}
+			return nil
+		},
+	}
+}
 
 func NewPickCommand() *cli.Command {
 	return &cli.Command{
@@ -62,7 +98,7 @@ func NewPickCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			logrus.Debugf("Start picking commits")
 			ctx := context.Background()
-			profile, err := NewProfile(c.String("path"))
+			profile, err := internal.NewProfile(c.String("path"))
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}

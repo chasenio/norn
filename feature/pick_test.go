@@ -2,8 +2,8 @@ package feature
 
 import (
 	"context"
-	"github.com/kentio/norn/github"
 	"github.com/kentio/norn/global"
+	"github.com/kentio/norn/pkg/github"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"testing"
