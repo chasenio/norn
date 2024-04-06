@@ -12,7 +12,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	app := web.NewApp()
+	conf.Output()
+	app := web.NewApp(conf)
 	logrus.Infof("server is running on port %s", conf.HTTPPort)
 	err = app.Run(fmt.Sprintf(":%s", conf.HTTPPort))
 	if err != nil {
