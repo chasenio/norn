@@ -1,16 +1,19 @@
 package webhook
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/webhooks/v6/github"
 	"github.com/kentio/norn/internal/common"
 	"github.com/kentio/norn/internal/service"
+	"github.com/kentio/norn/service/task"
 	"github.com/sirupsen/logrus"
+	"math/rand"
 	"net/http"
 	"reflect"
 )
 
-func GitHubHandler(config *service.Config) gin.HandlerFunc {
+func GitHubHandler(config *service.Config, tk *task.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// log request header
 		logrus.Infof("request header: %v", c.Request.Header)
@@ -22,7 +25,7 @@ func GitHubHandler(config *service.Config) gin.HandlerFunc {
 			github.InstallationEvent, // App Install event, type: github.InstallationPayload; action: created, suspend, unsuspend, deleted
 			github.IntegrationInstallationEvent,
 			github.IntegrationInstallationRepositoriesEvent)
-		if err != nil {
+		if err != nil && !errors.Is(err, github.ErrEventNotFound) {
 			logrus.Errorf("parse payload error: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"message": "parse payload error.",
@@ -33,6 +36,10 @@ func GitHubHandler(config *service.Config) gin.HandlerFunc {
 		payloadType := reflect.TypeOf(payload).String()
 		action := reflect.ValueOf(payload).FieldByName("Action").Interface().(string)
 		logrus.Infof("payload type: %v action: %v", payloadType, action)
+
+		_id := rand.Intn(1000)
+		tk.Push(_id)
+		logrus.Infof("send task id: %d", _id)
 
 		common.WebhookToFile(payload, action)
 
