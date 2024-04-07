@@ -28,7 +28,6 @@ func WebhookToFile(payload interface{}, action string) {
 	plTypeName := reflect.TypeOf(payload).String()
 	eventType := plTypeName[strings.LastIndex(plTypeName, ".")+1:]
 
-	// 获取Action属性的值
 	logrus.Infof("request body hash: %x, action: %s", hashVal, action)
 
 	// generate file name

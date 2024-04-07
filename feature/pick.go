@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/kentio/norn/global"
-	"github.com/kentio/norn/types"
+	types2 "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"text/template"
 )
 
 type PickFeature struct {
-	provider types.Provider
+	provider types2.Provider
 	branches []string
 }
 
@@ -36,7 +36,7 @@ type PickToRefMROpt struct {
 	IsSummaryTask  bool
 }
 
-func NewPickFeature(provider types.Provider, branches []string) *PickFeature {
+func NewPickFeature(provider types2.Provider, branches []string) *PickFeature {
 	return &PickFeature{provider: provider, branches: branches}
 }
 
@@ -46,7 +46,7 @@ func (pick *PickFeature) DoPick(ctx context.Context, opt *PickOption) error {
 	}
 
 	// 1. get reference
-	reference, err := pick.provider.Reference().Get(ctx, &types.GetRefOption{
+	reference, err := pick.provider.Reference().Get(ctx, &types2.GetRefOption{
 		Repo: opt.Repo,
 		Ref:  fmt.Sprintf("refs/heads/%s", opt.Target),
 	})
@@ -55,7 +55,7 @@ func (pick *PickFeature) DoPick(ctx context.Context, opt *PickOption) error {
 	}
 
 	// 2. get commit
-	commit, err := pick.provider.Commit().Get(ctx, &types.GetCommitOption{
+	commit, err := pick.provider.Commit().Get(ctx, &types2.GetCommitOption{
 		Repo: opt.Repo,
 		SHA:  opt.SHA,
 	})
@@ -64,7 +64,7 @@ func (pick *PickFeature) DoPick(ctx context.Context, opt *PickOption) error {
 	}
 
 	// 2.1 if last commit message is same as pick message, skip
-	lastCommit, err := pick.provider.Commit().Get(ctx, &types.GetCommitOption{Repo: opt.Repo, SHA: reference.SHA})
+	lastCommit, err := pick.provider.Commit().Get(ctx, &types2.GetCommitOption{Repo: opt.Repo, SHA: reference.SHA})
 	if err != nil {
 		logrus.Debugf("failed to get last commit: %+v", err)
 		return err
@@ -80,7 +80,7 @@ func (pick *PickFeature) DoPick(ctx context.Context, opt *PickOption) error {
 		return nil
 	}
 	// 3. create commit
-	createCommit, err := pick.provider.Commit().Create(ctx, &types.CreateCommitOption{
+	createCommit, err := pick.provider.Commit().Create(ctx, &types2.CreateCommitOption{
 		Repo:        opt.Repo,
 		Tree:        commit.Tree(),
 		SHA:         commit.SHA(),
@@ -94,7 +94,7 @@ func (pick *PickFeature) DoPick(ctx context.Context, opt *PickOption) error {
 	}
 
 	// 4. update reference
-	_, err = pick.provider.Reference().Update(ctx, &types.UpdateOption{
+	_, err = pick.provider.Reference().Update(ctx, &types2.UpdateOption{
 		Repo: opt.Repo,
 		Ref:  fmt.Sprintf("refs/heads/%s", opt.Target),
 		SHA:  createCommit.SHA(),
@@ -148,7 +148,7 @@ func (pick *PickFeature) DoPickSummaryComment(ctx context.Context, do *PickToRef
 	}
 	logrus.Infof("Submit summary comment: %s", summaryComment)
 	// submit comment
-	_, err = pick.provider.Comment().Create(ctx, &types.CreateCommentOption{
+	_, err = pick.provider.Comment().Create(ctx, &types2.CreateCommentOption{
 		MergeRequestID: do.MergeRequestID,
 		Body:           summaryComment,
 		Repo:           do.Repo,
@@ -164,7 +164,7 @@ func (pick *PickFeature) DoPickSummaryComment(ctx context.Context, do *PickToRef
 // DoPickToBranchesFromMergeRequest DoPick commits from one branch to another
 func (pick *PickFeature) DoPickToBranchesFromMergeRequest(ctx context.Context, do *PickToRefMROpt) (done []string, failed []string, err error) {
 
-	comments, err := pick.provider.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: do.MergeRequestID, Repo: do.Repo})
+	comments, err := pick.provider.Comment().Find(ctx, &types2.FindCommentOption{MergeRequestID: do.MergeRequestID, Repo: do.Repo})
 
 	if !IsInMergeRequestComments(comments) {
 		logrus.Infof("No pick comment")
@@ -232,7 +232,7 @@ func (pick *PickFeature) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 	}
 
 	// submit pick result to merge request
-	_, err = pick.provider.Comment().Create(ctx, &types.CreateCommentOption{
+	_, err = pick.provider.Comment().Create(ctx, &types2.CreateCommentOption{
 		Repo:           do.Repo,
 		MergeRequestID: do.MergeRequestID,
 		Body:           pickResultComment,
@@ -246,7 +246,7 @@ func (pick *PickFeature) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 // GetSelectedRefByMergeReqeust get selected reference by merge request
 func (pick *PickFeature) GetSelectedRefByMergeReqeust(ctx context.Context, repo string, mergeRequestID string) (selectedBranches []string, err error) {
 	// get merge request comments
-	comments, err := pick.provider.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
+	comments, err := pick.provider.Comment().Find(ctx, &types2.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
 	if err != nil {
 		logrus.Debugf("Get merge request comments failed: %s", err)
 		return nil, err
@@ -264,7 +264,7 @@ func (pick *PickFeature) GetSelectedRefByMergeReqeust(ctx context.Context, repo 
 }
 
 func (pick *PickFeature) IsInMergeRequestComments(ctx context.Context, repo string, mergeRequestID string) (bool, error) {
-	comments, err := pick.provider.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
+	comments, err := pick.provider.Comment().Find(ctx, &types2.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
 	if err != nil {
 		logrus.Debugf("Get merge request comments failed: %s", err)
 		return false, err
@@ -273,7 +273,7 @@ func (pick *PickFeature) IsInMergeRequestComments(ctx context.Context, repo stri
 }
 
 // IsInMergeRequestComments check if comment is in merge request
-func IsInMergeRequestComments(comments []types.Comment) bool {
+func IsInMergeRequestComments(comments []types2.Comment) bool {
 	for _, c := range comments {
 		if strings.Contains(c.Body(), global.CherryPickSummaryFlag) {
 			return true

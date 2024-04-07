@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	gh "github.com/google/go-github/v50/github"
-	"github.com/kentio/norn/types"
+	"github.com/kentio/norn/pkg/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 )

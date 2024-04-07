@@ -3,18 +3,18 @@ package global
 import (
 	"context"
 	"github.com/kentio/norn/pkg/github"
-	"github.com/kentio/norn/types"
+	types2 "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
 // NewProvider NewClient returns a new client for the given vendor.
-func NewProvider(ctx context.Context, vendor string, token string) (types.Provider, error) {
+func NewProvider(ctx context.Context, vendor string, token string) (types2.Provider, error) {
 	logrus.Debugf("New provider: %s", vendor)
 
 	switch vendor {
 	case "gh", "github":
 		return github.NewProvider(ctx, token), nil
 	default:
-		return nil, types.ErrUnknownProvider
+		return nil, types2.ErrUnknownProvider
 	}
 }
