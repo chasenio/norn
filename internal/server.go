@@ -12,7 +12,7 @@ type Server struct {
 	api  *api.Api
 	task *task.Service
 
-	config *service.Config
+	cfg *service.Config
 }
 
 var Model = fx.Options(
@@ -27,18 +27,18 @@ var Model = fx.Options(
 
 func NewServer(config *service.Config, api *api.Api, task *task.Service) *Server {
 	return &Server{
-		config: config,
-		api:    api,
-		task:   task,
+		cfg:  config,
+		api:  api,
+		task: task,
 	}
 }
 
-func StartAppHook(ctx context.Context, app *Server) error {
-	return app.Start(ctx)
+func StartAppHook(ctx context.Context, s *Server) error {
+	return s.Start(ctx)
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	s.api.Start(ctx)
+	s.api.Start()
 
 	s.task.Start()
 
