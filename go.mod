@@ -1,6 +1,8 @@
 module github.com/kentio/norn
 
-go 1.18
+go 1.21
+
+toolchain go1.22.1
 
 require (
 	github.com/google/go-github/v50 v50.2.0
@@ -13,6 +15,7 @@ require (
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
+	github.com/bradleyfalzon/ghinstallation/v2 v2.10.0 // indirect
 	github.com/bytedance/sonic v1.11.3 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.1 // indirect
@@ -27,7 +30,9 @@ require (
 	github.com/go-playground/validator/v10 v10.19.0 // indirect
 	github.com/go-playground/webhooks/v6 v6.3.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/google/go-github/v60 v60.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
