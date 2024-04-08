@@ -1,18 +1,29 @@
 package service
 
 import (
+	"crypto/rsa"
 	"github.com/kentio/norn/internal/common"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
+type GithubConfig struct {
+	// Secret is the webhook secret, it is used to verify the payload
+	Secret string `yaml:"secret" json:"secret"`
+	// AppID is the GitHub App ID
+	AppID string `yaml:"app_id" json:"app_id"`
+	// InstallationID is the GitHub App Installation ID
+	// Usually, it from the webhook payload installation field { id: 123456 }
+	InstallationID string `yaml:"installation_id" json:"installation_id"`
+	// PrivateKey is the GitHub App Private Key
+	PrivateKey string `yaml:"private_key" json:"private_key"`
+}
+
 type Config struct {
 	HTTPPort string `yaml:"http_port" json:"http_port"`
 
-	// Webhook Secret(Optional)
-	Github struct {
-		Secret string `yaml:"secret" json:"secret"`
-	}
+	// Github is the GitHub configuration
+	Github *GithubConfig
 }
 
 func NewConfig() (*Config, error) {
@@ -50,4 +61,14 @@ func (c *Config) Output() {
 	for k, v := range c.toMap() {
 		logrus.Infof("%s: %v", k, v)
 	}
+}
+
+// PrivateKey returns the private key for the GitHub App
+func (c *Config) PrivateKey() (*rsa.PrivateKey, error) {
+	key, err := common.ToPrivateKeys(c.Github.PrivateKey)
+	if err != nil {
+		logrus.Fatalf("could not parse private key: %s", err)
+		return nil, err
+	}
+	return key, nil
 }
