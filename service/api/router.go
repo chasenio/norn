@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/kentio/norn/internal/service"
@@ -14,18 +15,18 @@ type Router struct {
 	httpServer *http.Server
 }
 
-func NewRouter(config *service.Config, tk *task.Service) *Router {
+func NewRouter(config *service.Config, tk *task.Service, ctx context.Context) *Router {
 	r := gin.Default()
 
 	v1 := r.Group("/v1")
 	hook := v1.Group("/webhook")
 
 	{
-		hook.POST("/github", webhook.GitHubHandler(config, tk))
+		hook.POST("/github", webhook.GitHubHandler(ctx, config, tk))
 	}
 
 	// if version is not v1, return default webhooks
-	r.POST("/webhook/github", webhook.GitHubHandler(config, tk))
+	r.POST("/webhook/github", webhook.GitHubHandler(ctx, config, tk))
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", config.HTTPPort),

@@ -8,13 +8,13 @@ import (
 )
 
 type Service struct {
-	queue chan int
+	queue chan func()
 	wg    sync.WaitGroup
 }
 
 func NewService(lc fx.Lifecycle) *Service {
 	s := &Service{
-		queue: make(chan int),
+		queue: make(chan func()),
 	}
 
 	lc.Append(fx.Hook{
@@ -34,8 +34,8 @@ func (s *Service) Start() {
 }
 
 // Push task to queue
-func (s *Service) Push(task int) {
-	s.queue <- task
+func (s *Service) Push(fn func()) {
+	s.queue <- fn
 }
 
 // Run task
@@ -56,7 +56,7 @@ func (s *Service) Stop() {
 func (s *Service) Wait() {
 	// check task number
 	if len(s.queue) != 0 {
-		logrus.Infof("queue has %d task(s), waiting for task done.", len(s.queue))
+		logrus.Infof("queue has %d tasks, waiting for task done.", len(s.queue))
 		s.wg.Wait()
 	}
 	logrus.Infof("all task done.")
@@ -64,8 +64,9 @@ func (s *Service) Wait() {
 }
 
 // Do task
-func (s *Service) Do(task int) {
+func (s *Service) Do(task func()) {
 	defer s.wg.Done()
-	logrus.Infof("execute task: %d", task)
-	// 处理任务逻辑
+	logrus.Debugf("execte task: %s", task)
+	task()
+	logrus.Infof("executed task: %s", task)
 }
