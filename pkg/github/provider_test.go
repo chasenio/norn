@@ -2,10 +2,7 @@ package github
 
 import (
 	"context"
-	"github.com/bradleyfalzon/ghinstallation/v2"
-	"github.com/google/go-github/v50/github"
 	"github.com/kentio/norn/pkg/types"
-	"net/http"
 	"testing"
 )
 
@@ -17,25 +14,25 @@ func TestNewProvider(t *testing.T) {
 }
 
 func TestGithubAppClient(t *testing.T) {
-	keypath := " "
-	var appID int64 = 1
-	var installationID int64 = 1
-	tr := http.DefaultTransport
-	itr, err := ghinstallation.NewKeyFromFile(tr, appID, installationID, keypath)
-	if err != nil {
-		t.Errorf("NewKeyFromFile error: %v", err)
+
+	opt := &Credential{
+		AppID:          0,
+		InstallationID: 0,
+		PrivateKey: []byte(
+			``),
 	}
 
-	client := github.NewClient(&http.Client{Transport: itr})
-	t.Logf("client: %+v", client)
+	gh, err := NewProviderWithOpt(context.Background(), opt)
+	if err != nil {
+		t.Errorf("New Client error: %v", err)
+	}
+	t.Logf("client: %+v", gh)
 
 	ctx := context.Background()
 
-	srv := NewCommentService(client)
-
-	comment, err := srv.Create(ctx, &types.CreateCommentOption{
-		Repo:           " ",
-		MergeRequestID: " ",
+	comment, err := gh.Comment().Create(ctx, &types.CreateCommentOption{
+		Repo:           "",
+		MergeRequestID: "",
 		Body:           "test comment",
 	})
 	if err != nil {

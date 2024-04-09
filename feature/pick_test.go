@@ -24,7 +24,7 @@ func TestPickFeature_DoPickSummaryComment(t *testing.T) {
 		SHA:            "cc382f5c74a879bda50cc5a8a73090ba83068733",
 		MergeRequestID: "60",
 	}
-	pick := NewPickFeature(provider, pickOpt.Branches)
+	pick := NewPickService(provider, pickOpt.Branches)
 	err := pick.DoPickSummaryComment(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -47,7 +47,7 @@ func TestPick(t *testing.T) {
 		SHA:            "9fe34a912edd44ef07052aa1305aea72adee3638",
 		MergeRequestID: "59",
 	}
-	pick := NewPickFeature(provider, pickOpt.Branches)
+	pick := NewPickService(provider, pickOpt.Branches)
 
 	err := pick.DoPick(ctx, &PickOption{
 		SHA:    pickOpt.SHA,
@@ -76,7 +76,7 @@ func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
 		SHA:            "",
 		MergeRequestID: "54",
 	}
-	pick := NewPickFeature(provider, pickOpt.Branches)
+	pick := NewPickService(provider, pickOpt.Branches)
 	// Is Exist
 	result, err := pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
@@ -142,7 +142,7 @@ func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
 		SHA:            "a569472376cd1f5ff8403811ceb67b9f809f961f",
 		MergeRequestID: "60",
 	}
-	pick := NewPickFeature(provider, pickOpt.Branches)
+	pick := NewPickService(provider, pickOpt.Branches)
 
 	// test is summary task
 	done, faild, err := pick.DoPickToBranchesFromMergeRequest(ctx, pickOpt)

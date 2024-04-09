@@ -18,3 +18,11 @@ func TestConfig_PrivateKey(t *testing.T) {
 	}
 	t.Logf("success.")
 }
+
+func TestNewConfig(t *testing.T) {
+	cfg, err := NewConfig()
+	if err != nil {
+		t.Errorf("new config err: %s", err)
+	}
+	t.Logf("load config success: %+v", cfg)
+}

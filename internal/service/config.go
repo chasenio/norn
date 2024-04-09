@@ -24,6 +24,11 @@ type Config struct {
 
 	// Github is the GitHub configuration
 	Github *GithubConfig
+
+	// Pick Path of Branchs
+	Branches []string `yaml:"branches" json:"branches"`
+	// Dev is Debug Mode
+	Dev bool
 }
 
 func NewConfig() (*Config, error) {

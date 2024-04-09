@@ -125,7 +125,7 @@ func NewPickCommand() *cli.Command {
 			sha, isSummary := c.String("sha"), c.Bool("is-summary")
 			logrus.Debugf("SHA: %s, IsSummary: %t", sha, isSummary)
 
-			pick := feature.NewPickFeature(provider, profile.Branches)
+			pick := feature.NewPickService(provider, profile.Branches)
 
 			pickOpt := &feature.PickToRefMROpt{
 				Repo:           repo,
