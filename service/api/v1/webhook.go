@@ -87,10 +87,9 @@ const (
 
 func NewPickOptFromEvent(pl github.PullRequestPayload, branches []string) *feature.PickToRefMROpt {
 	opt := &feature.PickToRefMROpt{
-		Repo:     pl.Repository.FullName,
-		Branches: branches,
-		//Form:           pl.PullRequest.Head.Ref,
-		Form:           "release/23.12",
+		Repo:           pl.Repository.FullName,
+		Branches:       branches,
+		Form:           pl.PullRequest.Head.Ref,
 		SHA:            *pl.PullRequest.MergeCommitSha,
 		MergeRequestID: strconv.FormatInt(pl.PullRequest.Number, 10),
 	}
