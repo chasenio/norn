@@ -32,7 +32,7 @@ type Config struct {
 }
 
 func NewConfig() (*Config, error) {
-	conf := &Config{}
+	cfg := &Config{}
 
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("norn")
@@ -44,13 +44,14 @@ func NewConfig() (*Config, error) {
 		logrus.Errorf("read config error: %v", err)
 	}
 
-	err = viper.Unmarshal(conf)
+	err = viper.Unmarshal(cfg)
 	if err != nil {
 		logrus.Errorf("unable to decode into struct, %v", err)
 		return nil, err
 	}
 
-	return conf, nil
+	cfg.Output()
+	return cfg, nil
 
 }
 
