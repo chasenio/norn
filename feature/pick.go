@@ -2,6 +2,7 @@ package feature
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/kentio/norn/global"
 	"github.com/kentio/norn/pkg/types"
@@ -28,8 +29,9 @@ type MergeCommentOpt struct {
 }
 
 type PickToRefMROpt struct {
-	Repo           string
-	Branches       []string
+	Repo     string
+	Branches []string
+	// Form branch
 	Form           string
 	SHA            string
 	MergeRequestID string
@@ -110,15 +112,13 @@ func (pick *PickService) DoPick(ctx context.Context, opt *PickOption) error {
 // DoPickSummaryComment submit pick summary comment
 func (pick *PickService) DoPickSummaryComment(ctx context.Context, do *PickToRefMROpt) error {
 	// Check if the comment is already submitted
-	if isExties, err := pick.IsInMergeRequestComments(ctx, do.Repo, do.MergeRequestID); err != nil {
+	// if exists, regen summary
+	comment, err := pick.IsInMergeRequestComments(ctx, do.Repo, do.MergeRequestID)
+	if err != nil {
 		logrus.Debugf("IsInMergeRequestComments failed: %+v", err)
 		return err
-	} else if isExties {
-		logrus.Infof("Summary comment already exists, exit")
-		return nil
 	}
-
-	// generate branch list
+	// generate branch list of comment body
 	var summaryBranches []string
 	var startFlag bool
 	for _, branch := range do.Branches {
@@ -147,16 +147,33 @@ func (pick *PickService) DoPickSummaryComment(ctx context.Context, do *PickToRef
 		return err
 	}
 	logrus.Infof("Submit summary comment: %s", summaryComment)
-	// submit comment
-	_, err = pick.provider.Comment().Create(ctx, &types.CreateCommentOption{
-		MergeRequestID: do.MergeRequestID,
-		Body:           summaryComment,
-		Repo:           do.Repo,
-	},
-	)
-	if err != nil {
-		return err
+
+	switch comment {
+	case nil:
+		// if not exists, submit summary comment
+		// submit comment
+		_, err = pick.provider.Comment().Create(ctx, &types.CreateCommentOption{
+			MergeRequestID: do.MergeRequestID,
+			Body:           summaryComment,
+			Repo:           do.Repo,
+		},
+		)
+		if err != nil {
+			return err
+		}
+	default:
+		// if exists, update the comment
+		logrus.Infof("pick comment already exists, regenerate summary comment.")
+		_, err = pick.provider.Comment().Update(ctx, &types.UpdateCommentOption{
+			CommentID: comment.CommentID(),
+			Body:      summaryComment,
+			Repo:      do.Repo,
+		})
+		if err != nil {
+			return err
+		}
 	}
+
 	logrus.Infof("Success to submit summary comment")
 	return nil
 }
@@ -166,9 +183,9 @@ func (pick *PickService) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 
 	comments, err := pick.provider.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: do.MergeRequestID, Repo: do.Repo})
 
-	if !IsInMergeRequestComments(comments) {
-		logrus.Infof("No pick comment")
-		return nil, nil, nil
+	if IsInMergeRequestComments(comments) == nil {
+		logrus.Errorf("not found pick comment")
+		return nil, nil, errors.New("not found pick comment")
 	}
 	logrus.Debugf("Start to pick ...")
 
@@ -279,23 +296,23 @@ func (pick *PickService) GetSelectedRefByMergeReqeust(ctx context.Context, repo 
 	return nil, nil
 }
 
-func (pick *PickService) IsInMergeRequestComments(ctx context.Context, repo string, mergeRequestID string) (bool, error) {
+func (pick *PickService) IsInMergeRequestComments(ctx context.Context, repo string, mergeRequestID string) (types.Comment, error) {
 	comments, err := pick.provider.Comment().Find(ctx, &types.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
 	if err != nil {
 		logrus.Debugf("Get merge request comments failed: %s", err)
-		return false, err
+		return nil, err
 	}
 	return IsInMergeRequestComments(comments), nil
 }
 
 // IsInMergeRequestComments check if comment is in merge request
-func IsInMergeRequestComments(comments []types.Comment) bool {
+func IsInMergeRequestComments(comments []types.Comment) types.Comment {
 	for _, c := range comments {
 		if strings.Contains(c.Body(), global.CherryPickSummaryFlag) {
-			return true
+			return c
 		}
 	}
-	return false
+	return nil
 }
 
 // ParseSelectedBranches parse selected branches from comment

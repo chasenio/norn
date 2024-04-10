@@ -78,21 +78,21 @@ func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 	// Is Exist
-	result, err := pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
+	comment, err := pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	if !result {
+	if comment == nil {
 		t.Fatalf("err: %v", err)
 	}
 
 	pickOpt.MergeRequestID = "45"
 	// Is Not Exist
-	result, err = pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
+	comment, err = pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	if result {
+	if comment != nil {
 		t.Fatalf("err: %v", err)
 	}
 }

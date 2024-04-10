@@ -15,7 +15,7 @@ type CommentService struct {
 }
 
 type Comment struct {
-	commentId int64
+	commentId string
 	body      string
 }
 
@@ -88,21 +88,48 @@ func (s *CommentService) Find(ctx context.Context, opt *types.FindCommentOption)
 	}), nil
 }
 
+// Update Comment updates a comment on the given merge request.
+func (s *CommentService) Update(ctx context.Context, opt *types.UpdateCommentOption) (types.Comment, error) {
+	if opt == nil {
+		return nil, types.ErrInvalidOptions
+	}
+	repoOpt, err := parseRepo(opt.Repo)
+	if err != nil {
+		return nil, err
+	}
+	logrus.Debugf("Update Comment Opt: %+v", *opt)
+	_commentID, err := strconv.Atoi(opt.CommentID)
+	commentID := int64(_commentID)
+	if err != nil {
+		logrus.Debugf("failed to convert comment id to int: %v", err)
+		return nil, err
+	}
+	comment, response, err := s.client.Issues.EditComment(ctx, repoOpt.Owner, repoOpt.Repo, commentID, &gh.IssueComment{
+		ID:   &commentID,
+		Body: gh.String(opt.Body),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list comments request: %v", err)
+	}
+	logrus.Debugf("Update Comment %s Response: %d", opt.CommentID, response.StatusCode)
+	return newIssueComment(comment), nil
+}
+
 func newIssueComment(comment *gh.IssueComment) *Comment {
 	return &Comment{
-		commentId: comment.GetID(),
+		commentId: strconv.FormatInt(comment.GetID(), 10),
 		body:      comment.GetBody(),
 	}
 }
 
 func newPRComment(comment *gh.PullRequestComment) *Comment {
 	return &Comment{
-		commentId: comment.GetID(),
+		commentId: strconv.FormatInt(comment.GetID(), 10),
 		body:      comment.GetBody(),
 	}
 }
 
-func (c *Comment) CommentID() any {
+func (c *Comment) CommentID() string {
 	return c.commentId
 }
 
