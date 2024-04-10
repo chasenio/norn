@@ -26,8 +26,9 @@ PLATFORM_LIST = \
 
 all: linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64
 
-build-cli:
+build:
 	go build -ldflags "$(LDFLAGS)" -o bin/norn $(CLI)
+	go build -ldflags "$(LDFLAGS)" -o bin/norns $(SERVE)
 
 linux-arm64:
 	GOARCH=arm64 GOOS=linux $(GOBUILD) -o $(BINDIR)/$(NAME)-$@-cli $(CLI)
