@@ -2,9 +2,12 @@ package service
 
 import (
 	"crypto/rsa"
+	"fmt"
 	"github.com/kentio/norn/internal/common"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"reflect"
+	"strings"
 )
 
 type GithubConfig struct {
@@ -14,45 +17,91 @@ type GithubConfig struct {
 	AppID string `yaml:"app_id" json:"app_id"`
 	// InstallationID is the GitHub App Installation ID
 	// Usually, it from the webhook payload installation field { id: 123456 }
-	InstallationID string `yaml:"installation_id" json:"installation_id"`
+	//InstallationID string `yaml:"installation_id" json:"installation_id"`
 	// PrivateKey is the GitHub App Private Key
 	PrivateKey string `yaml:"private_key" json:"private_key"`
 }
+
+const (
+	ConfigType  = "yaml"
+	ConfigFile  = "config.yaml"
+	DefaultPort = "8080"
+	Debug       = true
+)
 
 type Config struct {
 	HTTPPort string `yaml:"http_port" json:"http_port"`
 
 	// Github is the GitHub configuration
-	Github *GithubConfig
+	Github GithubConfig
 
 	// Pick Path of Branchs
 	Branches []string `yaml:"branches" json:"branches"`
 	// Dev is Debug Mode
-	Dev bool
+	Dev bool `yaml:"dev" json:"dev"`
 }
 
 func NewConfig() (*Config, error) {
-	cfg := &Config{}
 
-	viper.AutomaticEnv()
+	//githubCfg := GithubConfig{}
 	viper.SetEnvPrefix("norn")
-	viper.SetConfigType("yaml")
-	viper.SetConfigFile("config.yaml")
+	viper.AutomaticEnv()
+	viper.AllowEmptyEnv(true)
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.SetConfigType(ConfigType)
+	viper.SetConfigFile(ConfigFile)
+	//viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
-	err := viper.ReadInConfig()
-	if err != nil {
-		logrus.Errorf("read config error: %v", err)
+	if err := viper.ReadInConfig(); err == nil {
+		logrus.Infof("found config file...")
+		viper.ConfigFileUsed()
 	}
 
-	err = viper.Unmarshal(cfg)
-	if err != nil {
+	cfg := Config{
+		HTTPPort: DefaultPort,
+		Dev:      Debug,
+	}
+
+	BindStructEnv(cfg, "") // Bind Config in env
+
+	if err := viper.Unmarshal(&cfg); err != nil {
 		logrus.Errorf("unable to decode into struct, %v", err)
 		return nil, err
 	}
 
 	cfg.Output()
-	return cfg, nil
+	return &cfg, nil
 
+}
+
+// BindStructEnv Bind Config in env
+func BindStructEnv(config interface{}, prefix string) {
+	r := reflect.TypeOf(config)
+
+	// iterate over each field for the type
+	for j := 0; j < r.NumField(); j++ {
+		field := r.Field(j)
+		var name string
+		if len(prefix) > 0 {
+			name = fmt.Sprintf("%s.%s", prefix, field.Name)
+		} else {
+			name = field.Name
+		}
+		// if type is struct
+		if field.Type.Kind() == reflect.Struct {
+			// get field value
+			value := reflect.ValueOf(config).FieldByName(field.Name).Interface()
+			BindStructEnv(value, name)
+			continue
+		}
+
+		// bind environment variables
+		if err := viper.BindEnv(name); err != nil {
+			logrus.Errorf("Bind Err：%v", err)
+		}
+
+	}
 }
 
 // toMap converts Config struct to map
@@ -65,7 +114,7 @@ func (c *Config) Output() {
 	logrus.Info("Serve Config:")
 	// each key-value pair in the map
 	for k, v := range c.toMap() {
-		logrus.Infof("%s: %v", k, v)
+		logrus.Infof("\t%s: \t%v", k, v)
 	}
 }
 

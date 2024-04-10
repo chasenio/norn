@@ -19,4 +19,9 @@ WORKDIR /norns
 
 COPY --from=builder /app/bin/norns .
 
+RUN set -x && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 CMD ["./norns"]
