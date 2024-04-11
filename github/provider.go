@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	gh "github.com/google/go-github/v50/github"
-	types2 "github.com/kentio/norn/types"
+	tp "github.com/kentio/norn/types"
 )
 
 type Provider struct {
@@ -52,18 +52,18 @@ func NewProviderWithOpt(ctx context.Context, cred *Credential) (*Provider, error
 	}, nil
 }
 
-func (p *Provider) Commit() types2.CommitService {
+func (p *Provider) Commit() tp.CommitService {
 	return p.commitService
 }
 
-func (p *Provider) Reference() types2.ReferenceService {
+func (p *Provider) Reference() tp.ReferenceService {
 	return p.referenceService
 }
 
-func (p *Provider) MergeRequest() types2.MergeRequestService {
+func (p *Provider) MergeRequest() tp.MergeRequestService {
 	return p.mergeRequestService
 }
 
-func (p *Provider) Comment() types2.CommentService {
+func (p *Provider) Comment() tp.CommentService {
 	return p.commentService
 }
