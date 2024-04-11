@@ -2,8 +2,8 @@ package pick
 
 import (
 	"context"
-	"github.com/kentio/norn/global"
-	"github.com/kentio/norn/pkg/github"
+	"github.com/kentio/norn"
+	"github.com/kentio/norn/github"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"testing"
@@ -118,7 +118,7 @@ func TestParseSelectedBranches(t *testing.T) {
 	}
 
 	for _, v := range results {
-		if !global.StringInSlice(v, case1) {
+		if !norn.StringInSlice(v, case1) {
 			t.Fatalf("parse selected branches failed")
 		}
 	}
@@ -128,7 +128,7 @@ func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	ctx := context.Background()
 	token := ""
-	provider, _ := global.NewProvider(ctx, "github", token)
+	provider, _ := norn.NewProvider(ctx, "github", token)
 
 	pickOpt := &PickToRefMROpt{
 		Repo: "kentio/test_cherry_pick",
@@ -204,7 +204,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 func TestNewCommentContent(t *testing.T) {
 	branches := []string{"master", "dev"}
 
-	taskSummaryResult, err := NewSelectComment(global.CherryPickTaskSummaryTemplate, branches)
+	taskSummaryResult, err := NewSelectComment(norn.CherryPickTaskSummaryTemplate, branches)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -216,7 +216,7 @@ func TestNewCommentContent(t *testing.T) {
 	}
 
 	// test Done template
-	doneResult, err := NewSelectComment(global.CherryPickTaskDoneTemplate, branches)
+	doneResult, err := NewSelectComment(norn.CherryPickTaskDoneTemplate, branches)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -228,7 +228,7 @@ func TestNewCommentContent(t *testing.T) {
 	}
 
 	// test Failed template
-	failedResult, err := NewSelectComment(global.CherryPickTaskFailedTemplate, branches)
+	failedResult, err := NewSelectComment(norn.CherryPickTaskFailedTemplate, branches)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}

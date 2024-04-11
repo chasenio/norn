@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	gh "github.com/google/go-github/v50/github"
-	"github.com/kentio/norn/pkg/types"
+	types2 "github.com/kentio/norn/types"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -20,9 +20,9 @@ func NewReferenceService(client *gh.Client) *ReferenceService {
 }
 
 // Get reference
-func (s *ReferenceService) Get(ctx context.Context, opt *types.GetRefOption) (*types.Reference, error) {
+func (s *ReferenceService) Get(ctx context.Context, opt *types2.GetRefOption) (*types2.Reference, error) {
 	if opt == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, types2.ErrInvalidOptions
 	}
 
 	repoOpt, err := parseRepo(opt.Repo)
@@ -41,21 +41,21 @@ func (s *ReferenceService) Get(ctx context.Context, opt *types.GetRefOption) (*t
 }
 
 // Find returns the branch with the specified filters.
-func (s *ReferenceService) Find(ctx context.Context, opts *types.FindOptions) ([]types.Reference, error) {
+func (s *ReferenceService) Find(ctx context.Context, opts *types2.FindOptions) ([]types2.Reference, error) {
 	if opts == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, types2.ErrInvalidOptions
 	}
 	return nil, nil
 }
 
-func (s *ReferenceService) Create(ctx context.Context, opt *types.CreateOptions) (*types.Reference, error) {
+func (s *ReferenceService) Create(ctx context.Context, opt *types2.CreateOptions) (*types2.Reference, error) {
 	return nil, nil
 }
 
 // Update updates the reference with the specified options.
-func (s *ReferenceService) Update(ctx context.Context, opt *types.UpdateOption) (*types.Reference, error) {
+func (s *ReferenceService) Update(ctx context.Context, opt *types2.UpdateOption) (*types2.Reference, error) {
 	if opt == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, types2.ErrInvalidOptions
 	}
 	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {
@@ -76,15 +76,15 @@ func (s *ReferenceService) Update(ctx context.Context, opt *types.UpdateOption) 
 		return nil, fmt.Errorf("reference: %v", *ref.Ref)
 	}
 	logrus.Debugf("Update Reference: %+v", *ref)
-	return &types.Reference{Ref: *ref.Ref}, nil
+	return &types2.Reference{Ref: *ref.Ref}, nil
 }
 
-func (s *ReferenceService) Delete(ctx context.Context, opt *types.DeleteOptions) error {
+func (s *ReferenceService) Delete(ctx context.Context, opt *types2.DeleteOptions) error {
 	return nil
 }
 
-func newBranch(branchRef *gh.Reference) *types.Reference {
-	return &types.Reference{
+func newBranch(branchRef *gh.Reference) *types2.Reference {
+	return &types2.Reference{
 		Ref: *branchRef.Ref,
 		SHA: *branchRef.Object.SHA,
 	}

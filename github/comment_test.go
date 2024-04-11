@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	types "github.com/kentio/norn/pkg/types"
+	types2 "github.com/kentio/norn/types"
 	"github.com/sirupsen/logrus"
 	"testing"
 )
@@ -15,7 +15,7 @@ func TestPullRequestService_FindComment(t *testing.T) {
 	mergeId := "53"
 	client := NewProvider(ctx, token)
 
-	comments, err := client.Comment().Find(ctx, &types.FindCommentOption{Repo: repo, MergeRequestID: mergeId})
+	comments, err := client.Comment().Find(ctx, &types2.FindCommentOption{Repo: repo, MergeRequestID: mergeId})
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -36,7 +36,7 @@ branches:
  - [ ] release/23.04
  - [ ] master
 `
-	comment, err := commentService.Create(ctx, &types.CreateCommentOption{
+	comment, err := commentService.Create(ctx, &types2.CreateCommentOption{
 		Repo:           "kentio/test_cherry_pick",
 		Body:           commentString,
 		MergeRequestID: "58",

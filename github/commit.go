@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	gh "github.com/google/go-github/v50/github"
-	"github.com/kentio/norn/pkg/types"
+	types2 "github.com/kentio/norn/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 )
@@ -17,7 +17,7 @@ type Commit struct {
 
 type Tree struct {
 	sha       string
-	entries   []types.TreeEntry
+	entries   []types2.TreeEntry
 	truncated bool
 }
 
@@ -42,9 +42,9 @@ func NewCommitService(client *gh.Client) *CommitService {
 }
 
 // Get Commit returns the commit for the given path.
-func (s *CommitService) Get(ctx context.Context, opt *types.GetCommitOption) (types.Commit, error) {
+func (s *CommitService) Get(ctx context.Context, opt *types2.GetCommitOption) (types2.Commit, error) {
 	if opt == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, types2.ErrInvalidOptions
 	}
 	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {
@@ -60,9 +60,9 @@ func (s *CommitService) Get(ctx context.Context, opt *types.GetCommitOption) (ty
 }
 
 // Create Commit creates a new commit.
-func (s *CommitService) Create(ctx context.Context, opt *types.CreateCommitOption) (types.Commit, error) {
+func (s *CommitService) Create(ctx context.Context, opt *types2.CreateCommitOption) (types2.Commit, error) {
 	if opt == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, types2.ErrInvalidOptions
 	}
 	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {
@@ -105,7 +105,7 @@ func newCommit(commit *gh.RepositoryCommit) *Commit {
 		return nil
 	}
 
-	entrys := lo.Map(commit.Commit.Tree.Entries, func(t *gh.TreeEntry, i int) types.TreeEntry {
+	entrys := lo.Map(commit.Commit.Tree.Entries, func(t *gh.TreeEntry, i int) types2.TreeEntry {
 		return newTreeEntry(*t)
 	})
 
@@ -125,7 +125,7 @@ func newCommit(commit *gh.RepositoryCommit) *Commit {
 	}
 }
 
-func newTreeEntry(entry gh.TreeEntry) types.TreeEntry {
+func newTreeEntry(entry gh.TreeEntry) types2.TreeEntry {
 	return &TreeEntry{
 		sha:       *entry.SHA,
 		path:      *entry.Path,
@@ -142,7 +142,7 @@ func (c *Commit) SHA() string {
 	return c.sha
 }
 
-func (c *Commit) Tree() types.Tree {
+func (c *Commit) Tree() types2.Tree {
 	return c.tree
 }
 
@@ -155,7 +155,7 @@ func (t *Tree) SHA() string {
 	return t.sha
 }
 
-func (t *Tree) Entries() []types.TreeEntry {
+func (t *Tree) Entries() []types2.TreeEntry {
 	return t.entries
 }
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	gh "github.com/google/go-github/v50/github"
-	"github.com/kentio/norn/pkg/types"
+	types2 "github.com/kentio/norn/types"
 	"github.com/sirupsen/logrus"
 	"strconv"
 )
@@ -17,7 +17,7 @@ type PullRequest struct {
 	id          int
 	title       string
 	description string
-	state       types.MergeRequestState
+	state       types2.MergeRequestState
 }
 
 func (s *PullRequest) MergeId() string {
@@ -32,7 +32,7 @@ func (s *PullRequest) Description() string {
 	return s.description
 }
 
-func (s *PullRequest) State() types.MergeRequestState {
+func (s *PullRequest) State() types2.MergeRequestState {
 	return s.state
 }
 
@@ -42,9 +42,9 @@ func NewPullRequestService(client *gh.Client) *PullRequestService {
 	}
 }
 
-func (s *PullRequestService) Get(ctx context.Context, opt *types.GetMergeRequestOption) (types.MergeRequest, error) {
+func (s *PullRequestService) Get(ctx context.Context, opt *types2.GetMergeRequestOption) (types2.MergeRequest, error) {
 	if opt == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, types2.ErrInvalidOptions
 	}
 	logrus.Debugf("Get Pull Request Opt: %+v", *opt)
 	repoOpt, err := parseRepo(opt.Repo)
@@ -74,19 +74,19 @@ func newPullRequest(pr *gh.PullRequest) (mr *PullRequest) {
 	}
 }
 
-func (s *PullRequest) getStateFromGithubPullRequest(pr *gh.PullRequest) types.MergeRequestState {
+func (s *PullRequest) getStateFromGithubPullRequest(pr *gh.PullRequest) types2.MergeRequestState {
 	return getStateFromGitHubPullRequestState(pr.GetState())
 }
 
-func getStateFromGitHubPullRequestState(state string) types.MergeRequestState {
+func getStateFromGitHubPullRequestState(state string) types2.MergeRequestState {
 	switch state {
 	case "open":
-		return types.MergeRequestStateOpen
+		return types2.MergeRequestStateOpen
 	case "closed":
-		return types.MergeRequestStateClosed
+		return types2.MergeRequestStateClosed
 	case "merged":
-		return types.MergeRequestStateMerged
+		return types2.MergeRequestStateMerged
 	default:
-		return types.MergeRequestStateUnknown
+		return types2.MergeRequestStateUnknown
 	}
 }
