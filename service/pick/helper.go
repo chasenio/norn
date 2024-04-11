@@ -1,4 +1,4 @@
-package feature
+package pick
 
 import (
 	"crypto/md5"

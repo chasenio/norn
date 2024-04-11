@@ -1,9 +1,6 @@
 package common
 
 import (
-	"crypto/rsa"
-	"fmt"
-	"github.com/golang-jwt/jwt/v4"
 	"reflect"
 )
 
@@ -37,13 +34,4 @@ func StructToMap(obj interface{}) map[string]interface{} {
 	}
 
 	return data
-}
-
-// ToPrivateKeys 将字符串私钥转换为 rsa.PrivateKey
-func ToPrivateKeys(privateKey string) (*rsa.PrivateKey, error) {
-	key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(privateKey))
-	if err != nil {
-		return nil, fmt.Errorf("could not parse private key: %s", err)
-	}
-	return key, nil
 }

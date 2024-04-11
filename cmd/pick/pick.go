@@ -1,11 +1,11 @@
-package cmd
+package pick
 
 import (
 	"context"
 	"fmt"
-	"github.com/kentio/norn/feature"
 	"github.com/kentio/norn/global"
 	"github.com/kentio/norn/internal"
+	"github.com/kentio/norn/service/pick"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -125,9 +125,9 @@ func NewPickCommand() *cli.Command {
 			sha, isSummary := c.String("sha"), c.Bool("is-summary")
 			logrus.Debugf("SHA: %s, IsSummary: %t", sha, isSummary)
 
-			pick := feature.NewPickService(provider, profile.Branches)
+			p := pick.NewPickService(provider, profile.Branches)
 
-			pickOpt := &feature.PickToRefMROpt{
+			pickOpt := &pick.PickToRefMROpt{
 				Repo:           repo,
 				Branches:       profile.Branches,
 				Form:           from,
@@ -142,14 +142,14 @@ func NewPickCommand() *cli.Command {
 			*/
 			if isSummary {
 				// Add cherry-pick summary to the merge request
-				if err := pick.DoPickSummaryComment(ctx, pickOpt); err != nil {
+				if err := p.DoPickSummaryComment(ctx, pickOpt); err != nil {
 					return cli.Exit(err.Error(), 1)
 				}
 				return cli.Exit("", 0)
 			}
 
 			if profile.Branches != nil {
-				_, _, err := pick.DoPickToBranchesFromMergeRequest(ctx, pickOpt)
+				_, _, err := p.DoPickToBranchesFromMergeRequest(ctx, pickOpt)
 				if err != nil {
 					return cli.Exit(err.Error(), 1)
 				}
