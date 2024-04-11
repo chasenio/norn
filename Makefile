@@ -14,6 +14,7 @@ LDFLAGS = -extldflags \
 		  -X "main.BuildNumber=$(BUILDNUMER)"
 
 GOBUILD=CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)"
+CLI=cmd/cli.go
 
 PLATFORM_LIST = \
 	linux-amd64 \
@@ -25,22 +26,22 @@ PLATFORM_LIST = \
 all: linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64
 
 build:
-	go build -o bin/norns -ldflags "$(LDFLAGS)"
+	go build -ldflags "$(LDFLAGS)" -o bin/norn $(CLI)
 
 linux-arm64:
-	GOARCH=arm64 GOOS=linux $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
+	GOARCH=arm64 GOOS=linux $(GOBUILD) -o $(BINDIR)/$(NAME)-$@ $(CLI)
 
 linux-amd64:
-	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
+	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(BINDIR)/$(NAME)-$@ $(CLI)
 
 darwin-amd64:
-	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
+	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(BINDIR)/$(NAME)-$@ $(CLI)
 
 darwin-arm64:
-	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(BINDIR)/$(NAME)-$@
+	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(BINDIR)/$(NAME)-$@ $(CLI)
 
 windows-amd64:
-	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(BINDIR)/$(NAME)-$@.exe
+	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(BINDIR)/$(NAME)-$@.exe $(CLI)
 
 lint:
 	GOOS=darwin golangci-lint run ./...
@@ -49,7 +50,7 @@ lint:
 
 gz_releases=$(addsuffix .gz, $(PLATFORM_LIST))
 
-releases: $(PLATFORM_LIST)
+release: $(PLATFORM_LIST)
 
 clean:
 	rm $(BINDIR)/*

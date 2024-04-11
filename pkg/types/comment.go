@@ -11,9 +11,10 @@ type FindCommentOption struct {
 type CommentService interface {
 	Find(ctx context.Context, opt *FindCommentOption) ([]Comment, error)
 	Create(ctx context.Context, opt *CreateCommentOption) (Comment, error)
+	Update(ctx context.Context, opt *UpdateCommentOption) (Comment, error)
 }
 
 type Comment interface {
-	CommentID() any
+	CommentID() string
 	Body() string
 }

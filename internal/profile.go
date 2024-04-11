@@ -1,9 +1,9 @@
-package cmd
+package internal
 
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -26,7 +26,7 @@ func NewProfile(path string) (*Profile, error) {
 	}(fp)
 
 	// read file
-	profileBytes, err := ioutil.ReadAll(fp)
+	profileBytes, err := io.ReadAll(fp)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read file: %w", err)
 	}
