@@ -1,6 +1,6 @@
 module github.com/kentio/norn/pick
 
-go 1.22.1
+go 1.21
 
 require (
 	github.com/kentio/norn v0.1.1
