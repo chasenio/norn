@@ -1,4 +1,4 @@
-package global
+package norn
 
 const (
 	CherryPickSummaryFlag = "<!-- Do not edit or delete , This is a cherry-pick summary flag. | o((>ω< ))o -->"

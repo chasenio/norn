@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"github.com/kentio/norn/pkg/types"
+	"github.com/kentio/norn/types"
 	"testing"
 )
 

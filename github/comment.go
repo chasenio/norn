@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	gh "github.com/google/go-github/v50/github"
-	"github.com/kentio/norn/pkg/types"
+	tp "github.com/kentio/norn/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"strconv"
@@ -26,9 +26,9 @@ func NewCommentService(client *gh.Client) *CommentService {
 }
 
 // Create Comment creates a new comment on the given merge request.
-func (s *CommentService) Create(ctx context.Context, opt *types.CreateCommentOption) (types.Comment, error) {
+func (s *CommentService) Create(ctx context.Context, opt *tp.CreateCommentOption) (tp.Comment, error) {
 	if opt == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, tp.ErrInvalidOptions
 	}
 	logrus.Debugf("Add Comment Opt: %+v", *opt)
 	repoOpt, err := parseRepo(opt.Repo)
@@ -59,9 +59,9 @@ func (s *CommentService) Create(ctx context.Context, opt *types.CreateCommentOpt
 }
 
 // Find Comment finds comments on the given merge request.
-func (s *CommentService) Find(ctx context.Context, opt *types.FindCommentOption) ([]types.Comment, error) {
+func (s *CommentService) Find(ctx context.Context, opt *tp.FindCommentOption) ([]tp.Comment, error) {
 	if opt == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, tp.ErrInvalidOptions
 	}
 	logrus.Debugf("Find Comment Opt: %+v", *opt)
 	repoOpt, err := parseRepo(opt.Repo)
@@ -83,15 +83,15 @@ func (s *CommentService) Find(ctx context.Context, opt *types.FindCommentOption)
 	}
 	logrus.Debugf("Find Comment Response: %d", response.StatusCode)
 
-	return lo.Map(comments, func(c *gh.IssueComment, _ int) types.Comment {
+	return lo.Map(comments, func(c *gh.IssueComment, _ int) tp.Comment {
 		return newIssueComment(c)
 	}), nil
 }
 
 // Update Comment updates a comment on the given merge request.
-func (s *CommentService) Update(ctx context.Context, opt *types.UpdateCommentOption) (types.Comment, error) {
+func (s *CommentService) Update(ctx context.Context, opt *tp.UpdateCommentOption) (tp.Comment, error) {
 	if opt == nil {
-		return nil, types.ErrInvalidOptions
+		return nil, tp.ErrInvalidOptions
 	}
 	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {

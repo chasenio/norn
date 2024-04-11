@@ -3,9 +3,9 @@ package pick
 import (
 	"context"
 	"fmt"
-	"github.com/kentio/norn/global"
+	"github.com/kentio/norn"
 	"github.com/kentio/norn/internal"
-	"github.com/kentio/norn/service/pick"
+	"github.com/kentio/norn/pick"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -110,7 +110,7 @@ func NewPickCommand() *cli.Command {
 				return cli.Exit("Vendor or token is empty", 1)
 			}
 
-			provider, err := global.NewProvider(ctx, vendor, token)
+			provider, err := norn.NewProvider(ctx, vendor, token)
 			if err != nil {
 				return cli.Exit("Unknown provider", 1)
 			}

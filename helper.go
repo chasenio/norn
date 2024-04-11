@@ -1,4 +1,4 @@
-package global
+package norn
 
 // StringInSlice returns true if the string is in the slice.
 func StringInSlice(s string, slice []string) bool {
@@ -8,4 +8,9 @@ func StringInSlice(s string, slice []string) bool {
 		}
 	}
 	return false
+}
+
+// String returns a pointer to the string value.
+func String(value string) *string {
+	return &value
 }
