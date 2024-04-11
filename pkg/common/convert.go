@@ -1,4 +1,4 @@
-package norn
+package common
 
 import (
 	"reflect"

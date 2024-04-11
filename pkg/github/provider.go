@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	gh "github.com/google/go-github/v50/github"
-	tp "github.com/kentio/norn/types"
+	tp "github.com/kentio/norn/pkg/types"
 )
 
 type Provider struct {

@@ -1,4 +1,4 @@
-package norn
+package internal
 
 // StringInSlice returns true if the string is in the slice.
 func StringInSlice(s string, slice []string) bool {

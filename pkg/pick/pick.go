@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/kentio/norn"
-	tp "github.com/kentio/norn/types"
+	"github.com/kentio/norn/internal"
+	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"text/template"
@@ -212,7 +212,7 @@ func (pick *PickService) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 		logrus.Debugf("Branch: %s", branch)
 
 		// if select branch not in defined branches, skip
-		if !norn.StringInSlice(branch, do.Branches) {
+		if !internal.StringInSlice(branch, do.Branches) {
 			logrus.Debugf("Skip pick: %s, not in defined %s", branch, do.Branches)
 			continue
 		}
@@ -287,7 +287,7 @@ func (pick *PickService) GetSelectedRefByMergeReqeust(ctx context.Context, repo 
 
 	// find comment with flag
 	for _, comment := range comments {
-		if strings.Contains(comment.Body(), norn.CherryPickSummaryFlag) {
+		if strings.Contains(comment.Body(), tp.CherryPickSummaryFlag) {
 			// parse selected reference
 			selectedBranches = ParseSelectedBranches(comment.Body())
 			return selectedBranches, nil
@@ -308,7 +308,7 @@ func (pick *PickService) IsInMergeRequestComments(ctx context.Context, repo stri
 // IsInMergeRequestComments check if comment is in merge request
 func IsInMergeRequestComments(comments []tp.Comment) tp.Comment {
 	for _, c := range comments {
-		if strings.Contains(c.Body(), norn.CherryPickSummaryFlag) {
+		if strings.Contains(c.Body(), tp.CherryPickSummaryFlag) {
 			return c
 		}
 	}
@@ -338,7 +338,7 @@ func ParseSelectedBranches(comment string) (selectedBranches []string) {
 // NewMergeReqeustComment generate comment for merge request
 func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary string, err error) {
 	if isSummary {
-		taskBranchLine, err := NewSelectComment(norn.CherryPickTaskSummaryTemplate, opt.branches)
+		taskBranchLine, err := NewSelectComment(tp.CherryPickTaskSummaryTemplate, opt.branches)
 		if err != nil {
 			return "", fmt.Errorf("failed to execute template: %w", err)
 		}
@@ -349,7 +349,7 @@ func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary strin
 	// render done summary
 	if len(opt.done) > 0 {
 		logrus.Debugf("render done summary: %s", opt.done)
-		taskBranchLine, err := NewItemComment(norn.CherryPickTaskDoneTemplate, opt.done)
+		taskBranchLine, err := NewItemComment(tp.CherryPickTaskDoneTemplate, opt.done)
 		if err != nil {
 			return "", fmt.Errorf("failed to execute template: %w", err)
 		}
@@ -360,7 +360,7 @@ func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary strin
 	if len(opt.failed) > 0 {
 
 		logrus.Debugf("render failed summary: %s", opt.failed)
-		taskBranchLine, err := NewItemComment(norn.CherryPickTaskFailedTemplate, opt.failed)
+		taskBranchLine, err := NewItemComment(tp.CherryPickTaskFailedTemplate, opt.failed)
 		if err != nil {
 			return "", fmt.Errorf("failed to execute template: %w", err)
 		}

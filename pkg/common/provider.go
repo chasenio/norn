@@ -1,9 +1,9 @@
-package norn
+package common
 
 import (
 	"context"
-	"github.com/kentio/norn/github"
-	tp "github.com/kentio/norn/types"
+	"github.com/kentio/norn/pkg/github"
+	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
