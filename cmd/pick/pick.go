@@ -140,21 +140,12 @@ func NewPickCommand() *cli.Command {
 				TODO Command 和 Backend 之间的场景不太一样
 				 	Command是具体指令，而Backend需要Context
 			*/
-			if isSummary {
-				// Add cherry-pick summary to the merge request
-				if err := p.DoPickSummaryComment(ctx, pickOpt); err != nil {
-					return cli.Exit(err.Error(), 1)
-				}
-				return cli.Exit("", 0)
-			}
 
-			if profile.Branches != nil {
-				_, _, err := p.DoPickToBranchesFromMergeRequest(ctx, pickOpt)
-				if err != nil {
-					return cli.Exit(err.Error(), 1)
-				}
+			err = p.DoWithOpt(ctx, pickOpt)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
 			}
-			return nil
+			return cli.Exit("Success!", 0)
 		},
 	}
 }
