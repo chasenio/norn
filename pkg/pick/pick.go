@@ -263,12 +263,12 @@ func (pick *PickService) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 func (pick *PickService) DoWithOpt(ctx context.Context, opt *PickToRefMROpt) error {
 	var err error
 	if opt.IsSummaryTask {
-		err := pick.DoPickSummaryComment(ctx, opt)
+		err = pick.DoPickSummaryComment(ctx, opt)
 		if err != nil {
 			logrus.Errorf("do summary err: %s", err)
 		}
 	} else {
-		_, _, err := pick.DoPickToBranchesFromMergeRequest(ctx, opt)
+		_, _, err = pick.DoPickToBranchesFromMergeRequest(ctx, opt)
 		if err != nil {
 			logrus.Errorf("do pick err: %s", err)
 		}
