@@ -60,7 +60,8 @@ func (s *PullRequestService) Get(ctx context.Context, opt *tp.GetMergeRequestOpt
 	pr, response, err := s.client.PullRequests.Get(ctx, repoOpt.Owner, repoOpt.Repo, mergeId)
 	logrus.Debugf("Get Pull Request Response: %+v", *response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get pull request: %v", err)
+		logrus.Debugf("Get PR Error: %+v", err)
+		return nil, err
 	}
 	return newPullRequest(pr), nil
 }

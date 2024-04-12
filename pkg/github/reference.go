@@ -34,7 +34,7 @@ func (s *ReferenceService) Get(ctx context.Context, opt *tp.GetRefOption) (*tp.R
 	branchRef, response, err := s.client.Git.GetRef(ctx, repoOpt.Owner, repoOpt.Repo, opt.Ref)
 	if err != nil {
 		logrus.Debugf("Get Reference Response: %+v", response)
-		return nil, fmt.Errorf("get reference failed: %v", err)
+		return nil, err
 	}
 	logrus.Debugf("Get Reference: %+v", *branchRef)
 	return newBranch(branchRef), nil
@@ -70,7 +70,8 @@ func (s *ReferenceService) Update(ctx context.Context, opt *tp.UpdateOption) (*t
 	}, false)
 	logrus.Debugf("Update Reference Response: %+v", response)
 	if err != nil {
-		return nil, fmt.Errorf("update reference failed: %v", err)
+		logrus.Debugf("Update Reference Error: %v", err)
+		return nil, err
 	}
 	if response.StatusCode == http.StatusUnprocessableEntity {
 		return nil, fmt.Errorf("reference: %v", *ref.Ref)

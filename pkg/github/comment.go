@@ -33,6 +33,7 @@ func (s *CommentService) Create(ctx context.Context, opt *tp.CreateCommentOption
 	logrus.Debugf("Add Comment Opt: %+v", *opt)
 	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {
+		logrus.Errorf("Failed to parse repo: %v", err)
 		return nil, err
 	}
 
@@ -49,9 +50,11 @@ func (s *CommentService) Create(ctx context.Context, opt *tp.CreateCommentOption
 		})
 	logrus.Debugf("Add Comment Response: %+v", response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to add comment: %v", err)
+		logrus.Warnf("Failed to add comment: %v", err)
+		return nil, err
 	}
 	if response.StatusCode != 201 {
+		logrus.Warnf("Add comment status code: %v", response.Status)
 		return nil, fmt.Errorf("failed to add comment: %v", response.Status)
 	}
 	logrus.Debugf("Add Comment : %+v", *prComment)
@@ -66,12 +69,13 @@ func (s *CommentService) Find(ctx context.Context, opt *tp.FindCommentOption) ([
 	logrus.Debugf("Find Comment Opt: %+v", *opt)
 	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {
+		logrus.Errorf("Failed to parse repo: %v", err)
 		return nil, err
 	}
 	// pull request to int
 	mrId, err := strconv.Atoi(opt.MergeRequestID)
 	if err != nil {
-		logrus.Debugf("failed to convert merge id to int: %v", err)
+		logrus.Errorf("failed to convert merge id to int: %v", err)
 		return nil, fmt.Errorf("failed to convert merge id to int: %v", err)
 	}
 
@@ -79,7 +83,8 @@ func (s *CommentService) Find(ctx context.Context, opt *tp.FindCommentOption) ([
 	// find comment
 	comments, response, err := s.client.Issues.ListComments(ctx, repoOpt.Owner, repoOpt.Repo, mrId, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list comments request: %v", err)
+		logrus.Warnf("Failed to list comments request: %v", err)
+		return nil, err
 	}
 	logrus.Debugf("Find Comment Response: %d", response.StatusCode)
 
@@ -101,7 +106,7 @@ func (s *CommentService) Update(ctx context.Context, opt *tp.UpdateCommentOption
 	_commentID, err := strconv.Atoi(opt.CommentID)
 	commentID := int64(_commentID)
 	if err != nil {
-		logrus.Debugf("failed to convert comment id to int: %v", err)
+		logrus.Errorf("failed to convert comment id to int: %v", err)
 		return nil, err
 	}
 	comment, response, err := s.client.Issues.EditComment(ctx, repoOpt.Owner, repoOpt.Repo, commentID, &gh.IssueComment{
@@ -109,7 +114,8 @@ func (s *CommentService) Update(ctx context.Context, opt *tp.UpdateCommentOption
 		Body: gh.String(opt.Body),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list comments request: %v", err)
+		logrus.Warnf("Failed to update comment request: %v", err)
+		return nil, err
 	}
 	logrus.Debugf("Update Comment %s Response: %d", opt.CommentID, response.StatusCode)
 	return newIssueComment(comment), nil

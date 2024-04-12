@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"fmt"
 	gh "github.com/google/go-github/v50/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/samber/lo"
@@ -53,7 +52,8 @@ func (s *CommitService) Get(ctx context.Context, opt *tp.GetCommitOption) (tp.Co
 	logrus.Debugf("Get Commit Opt: %+v", *opt)
 	commit, response, err := s.client.Repositories.GetCommit(ctx, repoOpt.Owner, repoOpt.Repo, opt.SHA, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get commit: %v", err)
+		logrus.Debugf("Get Commit Error: %+v", err)
+		return nil, err
 	}
 	logrus.Debugf("Get Commit Response: %+v", *response)
 	return newCommit(commit), nil
@@ -87,7 +87,8 @@ func (s *CommitService) Create(ctx context.Context, opt *tp.CreateCommitOption) 
 		Parents: parents,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create commit: %v", err)
+		logrus.Errorf("Create Commit Error: %v", err)
+		return nil, err
 	}
 
 	return newGithubCommit(commit), nil

@@ -68,7 +68,7 @@ func (pick *PickService) DoPick(ctx context.Context, opt *PickOption) error {
 	// 2.1 if last commit message is same as pick message, skip
 	lastCommit, err := pick.provider.Commit().Get(ctx, &tp.GetCommitOption{Repo: opt.Repo, SHA: reference.SHA})
 	if err != nil {
-		logrus.Debugf("failed to get last commit: %+v", err)
+		logrus.Warnf("failed to get last commit: %+v", err)
 		return err
 	}
 	pickMessage := fmt.Sprintf("%s\n\n(cherry picked from commit %s)", commit.Message(), opt.SHA[:7])
@@ -78,8 +78,8 @@ func (pick *PickService) DoPick(ctx context.Context, opt *PickOption) error {
 	pickMessageMd5 := sumMd5(pickMessage)
 	logrus.Debugf("last commit message md5: %s, pick message md5: %s", lastCommitMessageMd5, pickMessageMd5)
 	if lastCommitMessageMd5 == pickMessageMd5 {
-		logrus.Debugf("reference %s last commit message is same as pick message, skip", reference.SHA)
-		return nil
+		logrus.Warnf("reference %s last commit message is same as pick message, skip", reference.SHA)
+		return errors.New("last commit message is same as pick message")
 	}
 	// 3. create commit
 	createCommit, err := pick.provider.Commit().Create(ctx, &tp.CreateCommitOption{
@@ -192,7 +192,7 @@ func (pick *PickService) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 	// 获取选中的需要pick的分支
 	selectedBranches, err := pick.GetSelectedRefByMergeReqeust(ctx, do.Repo, do.MergeRequestID)
 	if err != nil {
-		logrus.Debugf("Get Select Ref failed: %+v", err)
+		logrus.Warnf("Get Select Ref failed: %+v", err)
 		return nil, nil, err
 	}
 
@@ -244,7 +244,7 @@ func (pick *PickService) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 	logrus.Debugf("Generate pick result comment")
 	pickResultComment, err := NewMergeReqeustComment(do.IsSummaryTask, &MergeCommentOpt{done: done, failed: failed})
 	if err != nil {
-		logrus.Debugf("Generate pick result comment failed: %s", err)
+		logrus.Errorf("Generate pick result comment failed: %s", err)
 		return nil, nil, err
 	}
 
@@ -281,7 +281,7 @@ func (pick *PickService) GetSelectedRefByMergeReqeust(ctx context.Context, repo 
 	// get merge request comments
 	comments, err := pick.provider.Comment().Find(ctx, &tp.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
 	if err != nil {
-		logrus.Debugf("Get merge request comments failed: %s", err)
+		logrus.Warnf("Get merge request comments failed: %s", err)
 		return nil, err
 	}
 
@@ -299,7 +299,7 @@ func (pick *PickService) GetSelectedRefByMergeReqeust(ctx context.Context, repo 
 func (pick *PickService) IsInMergeRequestComments(ctx context.Context, repo string, mergeRequestID string) (tp.Comment, error) {
 	comments, err := pick.provider.Comment().Find(ctx, &tp.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
 	if err != nil {
-		logrus.Debugf("Get merge request comments failed: %s", err)
+		logrus.Warnf("Get merge request comments failed: %s", err)
 		return nil, err
 	}
 	return IsInMergeRequestComments(comments), nil
@@ -336,7 +336,8 @@ func ParseSelectedBranches(comment string) (selectedBranches []string) {
 }
 
 // NewMergeReqeustComment generate comment for merge request
-func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary string, err error) {
+func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (string, error) {
+	var summary string
 	if isSummary {
 		taskBranchLine, err := NewSelectComment(tp.CherryPickTaskSummaryTemplate, opt.branches)
 		if err != nil {
@@ -362,7 +363,8 @@ func NewMergeReqeustComment(isSummary bool, opt *MergeCommentOpt) (summary strin
 		logrus.Debugf("render failed summary: %s", opt.failed)
 		taskBranchLine, err := NewItemComment(tp.CherryPickTaskFailedTemplate, opt.failed)
 		if err != nil {
-			return "", fmt.Errorf("failed to execute template: %w", err)
+			logrus.Errorf("failed to execute template: %s \n branches: %s \n err: %+v", tp.CherryPickTaskFailedTemplate, opt.failed, err)
+			return "", err
 		}
 		failedString = taskBranchLine.String()
 	}
@@ -397,7 +399,7 @@ func NewSelectComment(layout string, branches []string) (content strings.Builder
 	}
 	err = tpl.Execute(&content, data)
 	if err != nil {
-		logrus.Debugf("Failed to execute template: %s \n branches: %s", layout, branches)
+		logrus.Warnf("Failed to execute template: %s \n branches: %s \n err: %+v", layout, branches, err)
 		return content, fmt.Errorf("failed to execute template: %w", err)
 	}
 	return content, nil
@@ -418,8 +420,8 @@ func NewItemComment(layout string, branches []string) (content strings.Builder, 
 	}
 	err = tpl.Execute(&content, data)
 	if err != nil {
-		logrus.Debugf("Failed to execute template: %s \n branches: %s", layout, branches)
-		return content, fmt.Errorf("failed to execute template: %w", err)
+		logrus.Warnf("Failed to execute template: %s \n branches: %s err: %+v", layout, branches, err)
+		return content, err
 	}
 	return content, nil
 }
