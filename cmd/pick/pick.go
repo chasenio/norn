@@ -131,7 +131,7 @@ func NewPickCommand() *cli.Command {
 				Repo:           repo,
 				Branches:       profile.Branches,
 				Form:           from,
-				SHA:            sha,
+				SHA:            &sha,
 				MergeRequestID: mrId,
 				IsSummaryTask:  isSummary,
 			}

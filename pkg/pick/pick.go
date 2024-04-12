@@ -33,7 +33,7 @@ type PickToRefMROpt struct {
 	Branches []string
 	// Form branch
 	Form           string
-	SHA            string
+	SHA            *string
 	MergeRequestID string
 	IsSummaryTask  bool
 }
@@ -220,7 +220,7 @@ func (pick *PickService) DoPickToBranchesFromMergeRequest(ctx context.Context, d
 		logrus.Debugf("Picking %s to %s", do.SHA, branch)
 		// DoPick commits
 		pickOption := &PickOption{
-			SHA:    do.SHA,
+			SHA:    *do.SHA,
 			Repo:   do.Repo,
 			Target: branch,
 		}
