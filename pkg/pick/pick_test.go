@@ -27,7 +27,7 @@ func TestPickFeature_DoPickSummaryComment(t *testing.T) {
 		MergeRequestID: "60",
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
-	err := pick.RenderComment(ctx, pickOpt)
+	err := pick.CreateSummaryComment(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestPick(t *testing.T) {
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 
-	err := pick.DoPick(ctx, &CherryPick{
+	err := pick.PerformPick(ctx, &CherryPick{
 		SHA:    *pickOpt.SHA,
 		Repo:   pickOpt.Repo,
 		Target: "master"})
@@ -80,7 +80,7 @@ func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 	// Is Exist
-	comment, err := pick.ExistSummary(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
+	comment, err := pick.CheckSummaryExist(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
 
 	pickOpt.MergeRequestID = "45"
 	// Is Not Exist
-	comment, err = pick.ExistSummary(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
+	comment, err = pick.CheckSummaryExist(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestParseSelectedBranches(t *testing.T) {
 <!-- Do not edit or delete , This is a cherry-pick summary flag. | o((>ω< ))o -->
 ---`
 
-	results := ParseSelectedBranches(text)
+	results := parseSelectedBranches(text)
 	t.Logf("results: %+v", results)
 
 	case1 := []string{"master", "dev", "release/23.03"}
@@ -147,7 +147,7 @@ func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
 	pick := NewPickService(provider, pickOpt.Branches)
 
 	// test is summary task
-	done, faild, err := pick.DoPickToBranches(ctx, pickOpt)
+	done, faild, err := pick.PerformPickToBranches(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
 
 func TestNewMergeReqeustComment(t *testing.T) {
 	// test is summary task comment
-	isSummaryOpt := MergeCommentOpt{
+	isSummaryOpt := Result{
 		branches: []string{"master", "dev"},
 	}
 	isSummaryResult, err := NewSummaryComment(true, &isSummaryOpt)
@@ -169,7 +169,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 	t.Logf("isSummaryResult: %s", isSummaryResult)
 
 	// test done comment
-	doneOpt := MergeCommentOpt{
+	doneOpt := Result{
 		done: []string{"master", "dev"},
 	}
 	doneResult, err := NewSummaryComment(false, &doneOpt)
@@ -182,7 +182,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 	//}
 
 	// test failed comment
-	failedOpt := MergeCommentOpt{
+	failedOpt := Result{
 		failed: []string{"master", "dev"},
 	}
 	failedResult, err := NewSummaryComment(false, &failedOpt)
@@ -192,7 +192,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 	t.Logf("failedResult: %s", failedResult)
 
 	// test done and failed comment
-	doneAndFailedOpt := MergeCommentOpt{
+	doneAndFailedOpt := Result{
 		done:   []string{"master", "dev"},
 		failed: []string{"aa", "bb"},
 	}

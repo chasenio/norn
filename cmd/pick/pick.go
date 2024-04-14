@@ -81,7 +81,7 @@ func NewPickCommand() *cli.Command {
 			},
 			&cli.StringFlag{
 				Name:     "for",
-				Usage:    "DoPick commits for a specific branch",
+				Usage:    "PerformPick commits for a specific branch",
 				Required: false,
 			},
 			&cli.StringFlag{
@@ -141,7 +141,7 @@ func NewPickCommand() *cli.Command {
 				 	Command是具体指令，而Backend需要Context
 			*/
 
-			err = p.DoWithOpt(ctx, pickOpt)
+			err = p.ProcessPick(ctx, pickOpt)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
