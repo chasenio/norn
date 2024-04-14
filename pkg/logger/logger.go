@@ -12,7 +12,6 @@ import (
 
 const (
 	timestampFormat = "2006-01-02 15:04:05Z07:00"
-	colorReset      = "\x1b[0m"
 	red             = 31
 	yellow          = 33
 	blue            = 36
