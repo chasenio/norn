@@ -127,13 +127,13 @@ func NewPickCommand() *cli.Command {
 
 			p := pick.NewPickService(provider, profile.Branches)
 
-			pickOpt := &pick.PickToRefMROpt{
+			pickOpt := &pick.Task{
 				Repo:           repo,
 				Branches:       profile.Branches,
 				Form:           from,
 				SHA:            &sha,
 				MergeRequestID: mrId,
-				IsSummaryTask:  isSummary,
+				IsSummary:      isSummary,
 			}
 
 			/*

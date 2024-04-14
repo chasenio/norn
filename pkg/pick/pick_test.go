@@ -14,7 +14,7 @@ import (
 func TestPickFeature_DoPickSummaryComment(t *testing.T) {
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")
-	pickOpt := &PickToRefMROpt{
+	pickOpt := &Task{
 		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
 			"release/23.03",
@@ -22,12 +22,12 @@ func TestPickFeature_DoPickSummaryComment(t *testing.T) {
 			"master",
 		},
 		Form:           "release/23.03",
-		IsSummaryTask:  true,
-		SHA:            "cc382f5c74a879bda50cc5a8a73090ba83068733",
+		IsSummary:      true,
+		SHA:            common.String("cc382f5c74a879bda50cc5a8a73090ba83068733"),
 		MergeRequestID: "60",
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
-	err := pick.DoPickSummaryComment(ctx, pickOpt)
+	err := pick.RenderComment(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestPickFeature_DoPickSummaryComment(t *testing.T) {
 func TestPick(t *testing.T) {
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")
-	pickOpt := &PickToRefMROpt{
+	pickOpt := &Task{
 		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
 			"release/23.03",
@@ -45,14 +45,14 @@ func TestPick(t *testing.T) {
 			"master",
 		},
 		Form:           "release/23.03",
-		IsSummaryTask:  false,
-		SHA:            "9fe34a912edd44ef07052aa1305aea72adee3638",
+		IsSummary:      false,
+		SHA:            common.String("9fe34a912edd44ef07052aa1305aea72adee3638"),
 		MergeRequestID: "59",
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 
-	err := pick.DoPick(ctx, &PickOption{
-		SHA:    pickOpt.SHA,
+	err := pick.DoPick(ctx, &CherryPick{
+		SHA:    *pickOpt.SHA,
 		Repo:   pickOpt.Repo,
 		Target: "master"})
 
@@ -66,7 +66,7 @@ func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")
-	pickOpt := &PickToRefMROpt{
+	pickOpt := &Task{
 		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
 			"release/23.03",
@@ -74,13 +74,13 @@ func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
 			"master",
 		},
 		Form:           "release/23.03",
-		IsSummaryTask:  false,
-		SHA:            "",
+		IsSummary:      false,
+		SHA:            common.String(""),
 		MergeRequestID: "54",
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 	// Is Exist
-	comment, err := pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
+	comment, err := pick.ExistSummary(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
 
 	pickOpt.MergeRequestID = "45"
 	// Is Not Exist
-	comment, err = pick.IsInMergeRequestComments(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
+	comment, err = pick.ExistSummary(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
 	token := ""
 	provider, _ := common.NewProvider(ctx, "github", token)
 
-	pickOpt := &PickToRefMROpt{
+	pickOpt := &Task{
 		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
 			"release/23.03",
@@ -140,14 +140,14 @@ func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
 			"master",
 		},
 		Form:           "release/23.03",
-		IsSummaryTask:  false,
-		SHA:            "a569472376cd1f5ff8403811ceb67b9f809f961f",
+		IsSummary:      false,
+		SHA:            common.String("a569472376cd1f5ff8403811ceb67b9f809f961f"),
 		MergeRequestID: "60",
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 
 	// test is summary task
-	done, faild, err := pick.DoPickToBranchesFromMergeRequest(ctx, pickOpt)
+	done, faild, err := pick.DoPickToBranches(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 	isSummaryOpt := MergeCommentOpt{
 		branches: []string{"master", "dev"},
 	}
-	isSummaryResult, err := NewMergeReqeustComment(true, &isSummaryOpt)
+	isSummaryResult, err := NewSummaryComment(true, &isSummaryOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 	doneOpt := MergeCommentOpt{
 		done: []string{"master", "dev"},
 	}
-	doneResult, err := NewMergeReqeustComment(false, &doneOpt)
+	doneResult, err := NewSummaryComment(false, &doneOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 	failedOpt := MergeCommentOpt{
 		failed: []string{"master", "dev"},
 	}
-	failedResult, err := NewMergeReqeustComment(false, &failedOpt)
+	failedResult, err := NewSummaryComment(false, &failedOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -196,7 +196,7 @@ func TestNewMergeReqeustComment(t *testing.T) {
 		done:   []string{"master", "dev"},
 		failed: []string{"aa", "bb"},
 	}
-	doneAndFailedResult, err := NewMergeReqeustComment(false, &doneAndFailedOpt)
+	doneAndFailedResult, err := NewSummaryComment(false, &doneAndFailedOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
