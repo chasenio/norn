@@ -2,12 +2,14 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	gh "github.com/google/go-github/v50/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 type CreatePatchOption struct {
@@ -23,6 +25,7 @@ func CreatePatchWithClient(ctx context.Context, opt *CreatePatchOption) (string,
 		Type: gh.Patch,
 	})
 	if err != nil {
+		logrus.Errorf("create path failed: %s", err.Error())
 		return "", err
 	}
 	return patch, nil
@@ -34,15 +37,25 @@ type CheckoutOption struct {
 }
 
 func Checkout(opt *CheckoutOption) error {
+	var stdout strings.Builder
+	// check branch exist
+	d := exec.Command("git", "branch", "-d", opt.Branch, "-f")
+	d.Dir = opt.RepoPath
+	d.Stdout = &stdout
+	d.Stderr = &stdout
+	if err := d.Run(); err != nil {
+		logrus.Warnf("delete branch err: %s", stdout.String())
+	}
+	stdout.Reset()
+	// checkout branch
 	remote := fmt.Sprintf("remotes/origin/%s", opt.Branch)
 	cmd := exec.Command("git", "checkout", "-b", opt.Branch, remote, "-f")
 	cmd.Dir = opt.RepoPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		logrus.Errorf("checkout branch failed: %s", err.Error())
-		return err
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stdout
+	if err := cmd.Run(); err != nil {
+		logrus.Errorf("checkout branch failed: %s\nerr: %s", stdout.String(), err.Error())
+		return errors.New("checkout branch failed")
 	}
 	return nil
 }

@@ -30,7 +30,6 @@ func (s *CommentService) Create(ctx context.Context, opt *tp.CreateCommentOption
 	if opt == nil {
 		return nil, tp.ErrInvalidOptions
 	}
-	logrus.Debugf("Add Comment Opt: %+v", *opt)
 	repoOpt, err := parseRepo(opt.Repo)
 	if err != nil {
 		logrus.Errorf("Failed to parse repo: %v", err)
@@ -57,7 +56,7 @@ func (s *CommentService) Create(ctx context.Context, opt *tp.CreateCommentOption
 		logrus.Warnf("Add comment status code: %v", response.Status)
 		return nil, fmt.Errorf("failed to add comment: %v", response.Status)
 	}
-	logrus.Debugf("Add Comment : %+v", *prComment)
+	logrus.Infof("Add Comment : %+v", *prComment)
 	return newIssueComment(prComment), nil
 }
 

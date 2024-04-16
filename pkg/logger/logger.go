@@ -36,7 +36,7 @@ func (m *formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	if entry.HasCaller() {
 		fName := filepath.Base(entry.Caller.File)                    // Get the filename
 		location := fmt.Sprintf("[%s:%d]", fName, entry.Caller.Line) // Get the filename and line number
-		newLog = fmt.Sprintf("%s[%s] %s%s\n", level, timestamp, location, entry.Message)
+		newLog = fmt.Sprintf("%s[%s] %s %s\n", level, timestamp, location, entry.Message)
 	} else {
 		newLog = fmt.Sprintf("%s[%s] %s\n", level, timestamp, entry.Message)
 	}
