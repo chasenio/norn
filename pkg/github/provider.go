@@ -14,7 +14,6 @@ type Provider struct {
 	referenceService    *ReferenceService
 	mergeRequestService *PullRequestService
 	commentService      *CommentService
-	treeService         *TreeService
 }
 
 func NewProvider(ctx context.Context, token string) *Provider {
@@ -25,7 +24,6 @@ func NewProvider(ctx context.Context, token string) *Provider {
 		referenceService:    NewReferenceService(client),
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
-		treeService:         NewTreeService(client),
 	}
 }
 
