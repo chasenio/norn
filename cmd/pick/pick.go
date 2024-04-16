@@ -146,7 +146,7 @@ func NewPickCommand() *cli.Command {
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			return cli.Exit(nil, 0)
+			return cli.Exit("", 0)
 		},
 	}
 }

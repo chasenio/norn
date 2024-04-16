@@ -15,7 +15,7 @@ func sumMd5(s string) string {
 }
 
 // parseSelectedBranches parse selected branches from comment
-func parseSelectedBranches(comment string) (selectedBranches []string) {
+func parseSelectedBranches(comment string) (selected []string) {
 	lines := strings.Split(comment, "\n")
 	for _, line := range lines {
 		if strings.Contains(line, "- [x]") {
@@ -28,10 +28,10 @@ func parseSelectedBranches(comment string) (selectedBranches []string) {
 			if line == "" {
 				continue
 			}
-			selectedBranches = append(selectedBranches, line)
+			selected = append(selected, line)
 		}
 	}
-	return selectedBranches
+	return selected
 }
 
 func generateTargetBranches(task *Task) []string {

@@ -7,7 +7,6 @@ import (
 	gh "github.com/google/go-github/v50/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -67,6 +66,7 @@ type ApplyPatchOption struct {
 }
 
 func ApplyPatch(opt *ApplyPatchOption) error {
+	var stdout strings.Builder
 	// check apply patch, but not apply
 	var cmd = &exec.Cmd{}
 	if opt.Check {
@@ -75,11 +75,12 @@ func ApplyPatch(opt *ApplyPatchOption) error {
 		cmd = exec.Command("git", "apply", opt.Patch)
 	}
 	cmd.Dir = opt.RepoPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stdout
 
 	err := cmd.Run()
 	if err != nil {
+		logrus.Warnf("apply patch failed: %s err: %s", stdout.String(), err.Error())
 		return tp.ErrConflict
 	}
 	return nil

@@ -60,29 +60,30 @@ func NewPickService(provider tp.Provider, branches []string) *Service {
 	return &Service{provider: provider, branches: branches}
 }
 
-// PerformPickToBranches PerformPick commits from one branches to another
-func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (result []*TaskResult, err error) {
+func (s *Service) FindCommentWithTask(ctx context.Context, task *Task, flag string) ([]tp.Comment, tp.Comment, error) {
 	comments, err := s.provider.Comment().Find(ctx, &tp.FindCommentOption{MergeRequestID: task.MergeRequestID, Repo: task.Repo})
 	if err != nil {
 		logrus.Warnf("Get merge request comments failed: %s", err)
-		return nil, err
+		return nil, nil, err
 	}
 
-	if FindSummaryWithFlag(comments, tp.CherryPickSummaryFlag) == nil {
-		logrus.Warnf("not found pick summary, end task")
-		return nil, nil
+	if comment := FindSummaryWithFlag(comments, flag); comment != nil {
+		logrus.Warnf("not found pick, end task")
+		return comments, comment, nil
 	}
+	return comments, nil, nil
+}
+
+// PerformPickToBranches PerformPick commits from one branches to another
+func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment tp.Comment) (result []*TaskResult, err error) {
+
 	logrus.Debugf("Start to pick ...")
 
-	// get selected branchs
-	selected, err := s.GetSelectedBranches(ctx, task.Repo, task.MergeRequestID)
-	if err != nil {
-		logrus.Warnf("Get Select Ref failed: %+v", err)
-		return nil, err
-	}
+	// get selected branches
+	selected := parseSelectedBranches(comment.Body())
 
 	if len(selected) == 0 {
-		logrus.Infof("No selected branches")
+		logrus.Warnf("no selected branches")
 		return nil, nil
 	}
 
@@ -95,7 +96,6 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (result
 			logrus.Debugf("Skip form branch: %s", branch)
 			continue // skip the branch, and pick commits from the next branch
 		}
-		logrus.Debugf("Branch: %s", branch)
 
 		// if select branch not in defined branches, skip
 		if !internal.StringInSlice(branch, task.Branches) {
@@ -129,11 +129,11 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (result
 		return nil, nil
 	}
 
-	// generate comment
-	logrus.Infof("Generate pick result comment")
-	pickResultComment, err := NewResultComment(tp.PickResultTemplate, result)
+	// generate content
+	logrus.Infof("Generate pick result content")
+	content, err := NewResultComment(tp.PickResultTemplate, result)
 	if err != nil {
-		logrus.Errorf("Generate pick result comment failed: %s", err)
+		logrus.Errorf("Generate pick result content failed: %s", err)
 		return nil, err
 	}
 
@@ -141,7 +141,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (result
 	_, err = s.provider.Comment().Create(ctx, &tp.CreateCommentOption{
 		Repo:           task.Repo,
 		MergeRequestID: task.MergeRequestID,
-		Body:           pickResultComment,
+		Body:           content,
 	})
 	if err != nil {
 		return nil, err
@@ -253,9 +253,9 @@ func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error {
 		return err
 	}
 
-	// Check if the comment is already submitted
+	// Check if the comment is existed
 	// if exists, regen summary
-	comment, err := s.CheckSummaryExist(ctx, task.Repo, task.MergeRequestID)
+	_, comment, err := s.FindCommentWithTask(ctx, task, tp.CherryPickSummaryFlag)
 	if err != nil {
 		logrus.Debugf("CheckSummaryExist failed: %+v", err)
 		return err
@@ -306,34 +306,26 @@ func (s *Service) ProcessPick(ctx context.Context, task *Task) error {
 			logrus.Errorf("create summary err: %s", err)
 		}
 	} else {
-		_, err = s.PerformPickToBranches(ctx, task)
+		// check if pick result is exist, if existed, skip
+		comments, result, err := s.FindCommentWithTask(ctx, task, tp.CherryPickResultFlag)
+		if err != nil || result != nil {
+			logrus.Warnf("pick result is exist or err: %s", err.Error())
+			return nil
+		}
+
+		// check if summary comment is exist, if not exist, skip
+		comment := FindSummaryWithFlag(comments, tp.CherryPickSummaryFlag)
+		if comment == nil {
+			logrus.Warnf("not found pick summary [%s]", comment)
+			return nil
+		}
+		// summary comment is exist, perform pick
+		_, err = s.PerformPickToBranches(ctx, task, comment)
 		if err != nil {
 			logrus.Errorf("perform pick err: %s", err)
 		}
 	}
 	return err
-}
-
-// GetSelectedBranches get selected reference by merge request
-func (s *Service) GetSelectedBranches(ctx context.Context, repo string, mergeRequestID string) ([]string, error) {
-	// get merge request comments
-	comments, err := s.provider.Comment().Find(ctx, &tp.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
-	if err != nil {
-		logrus.Warnf("Get merge request comments failed: %s", err)
-		return nil, err
-	}
-
-	var selected []string
-
-	// find comment with flag
-	for _, comment := range comments {
-		if strings.Contains(comment.Body(), tp.CherryPickSummaryFlag) {
-			// parse selected reference
-			selected = parseSelectedBranches(comment.Body())
-			return selected, nil
-		}
-	}
-	return nil, nil
 }
 
 // CheckSummaryExist check if summary comment is exist

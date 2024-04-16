@@ -36,7 +36,7 @@ func TestPick_CreateSummaryWithTask(t *testing.T) {
 func TestPick(t *testing.T) {
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")
-	pickOpt := &Task{
+	task := &Task{
 		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
 			"release/23.03",
