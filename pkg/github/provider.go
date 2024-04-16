@@ -7,30 +7,32 @@ import (
 )
 
 type Provider struct {
-	ProviderID string
+	providerID tp.ProviderType
 	client     *gh.Client
 
 	commitService       *CommitService
 	referenceService    *ReferenceService
 	mergeRequestService *PullRequestService
 	commentService      *CommentService
+	treeService         *TreeService
 }
 
 func NewProvider(ctx context.Context, token string) *Provider {
 	client := NewGithubClient(ctx, token)
 	return &Provider{
-		ProviderID:          "github",
+		providerID:          tp.GitHubProvider,
 		commitService:       NewCommitService(client),
 		referenceService:    NewReferenceService(client),
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
+		treeService:         NewTreeService(client),
 	}
 }
 
 // NewProviderWithClient creates a new provider with the given client.
 func NewProviderWithClient(client *gh.Client) *Provider {
 	return &Provider{
-		ProviderID:          "github",
+		providerID:          tp.GitHubProvider,
 		client:              client,
 		commitService:       NewCommitService(client),
 		referenceService:    NewReferenceService(client),
@@ -53,4 +55,8 @@ func (p *Provider) MergeRequest() tp.MergeRequestService {
 
 func (p *Provider) Comment() tp.CommentService {
 	return p.commentService
+}
+
+func (p *Provider) ProviderID() tp.ProviderType {
+	return p.providerID
 }

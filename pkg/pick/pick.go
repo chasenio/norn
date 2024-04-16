@@ -16,10 +16,11 @@ type Service struct {
 	branches []string
 }
 
-type CherryPick struct {
-	SHA    string
-	Repo   string
-	Target string
+type CherryPickOptions struct {
+	SHA      string
+	Repo     string
+	Target   string
+	RepoPath string
 }
 
 type Result struct {
@@ -28,6 +29,13 @@ type Result struct {
 	failed   []string
 }
 
+type Mode int
+
+const (
+	MergeRequest Mode = iota
+	CheeryPick
+)
+
 type Task struct {
 	Repo           string
 	Branches       []string // target branches
@@ -35,6 +43,8 @@ type Task struct {
 	SHA            *string
 	MergeRequestID string
 	IsSummary      bool // generate summary comment
+	PickMode       Mode
+	RepoPath       string
 }
 
 func NewPickService(provider tp.Provider, branches []string) *Service {
@@ -86,10 +96,11 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (done [
 
 		logrus.Debugf("Picking %s to %s", *task.SHA, branch)
 		// PerformPick commits
-		pickOption := &CherryPick{
-			SHA:    *task.SHA,
-			Repo:   task.Repo,
-			Target: branch,
+		pickOption := &CherryPickOptions{
+			SHA:      *task.SHA,
+			Repo:     task.Repo,
+			Target:   branch,
+			RepoPath: task.RepoPath,
 		}
 		err = s.PerformPick(ctx, pickOption)
 		if err != nil {
@@ -127,7 +138,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (done [
 	return done, failed, nil
 }
 
-func (s *Service) PerformPick(ctx context.Context, opt *CherryPick) error {
+func (s *Service) PerformPick(ctx context.Context, opt *CherryPickOptions) error {
 	if s.provider == nil || opt == nil {
 		logrus.Error("provider or opt is nil")
 		return ErrInvalidOptions
@@ -170,6 +181,19 @@ func (s *Service) PerformPick(ctx context.Context, opt *CherryPick) error {
 		logrus.Warnf("reference %s last commit message is same as pick message, skip", reference.SHA)
 		return errors.New("last commit message is same as pick message")
 	}
+
+	// Check conflict
+	err = s.provider.Commit().CheckConflict(ctx, &tp.CheckConflictOption{
+		Repo:   opt.Repo,
+		Commit: opt.SHA,
+		Target: opt.Target,
+		Mode:   GetCheckConflictMode(s.provider.ProviderID()),
+	})
+	if err != nil {
+		logrus.Errorf("failed to check conflict: %+v", err)
+		return err
+	}
+
 	// 3. create commit
 	createCommit, err := s.provider.Commit().Create(ctx, &tp.CreateCommitOption{
 		Repo:        opt.Repo,

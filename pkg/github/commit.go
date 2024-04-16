@@ -2,10 +2,12 @@ package github
 
 import (
 	"context"
+	"errors"
 	gh "github.com/google/go-github/v50/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
+	"os"
 )
 
 type Commit struct {
@@ -59,6 +61,67 @@ func (s *CommitService) Get(ctx context.Context, opt *tp.GetCommitOption) (tp.Co
 	return newCommit(commit), nil
 }
 
+// CheckConflict Check Conflict
+func (s *CommitService) CheckConflict(ctx context.Context, opts *tp.CheckConflictOption) error {
+
+	if opts.Mode != tp.WithCommand {
+		return errors.New("not support check conflict with API")
+	}
+
+	repoOpt, err := parseRepo(opts.Repo)
+	// create patch
+	content, err := CreatePatchWithClient(ctx, &CreatePatchOption{
+		Client: s.client,
+		Commit: opts.Commit,
+		Owner:  repoOpt.Owner,
+		Repo:   repoOpt.Repo,
+	})
+	if err != nil {
+		return err
+	}
+
+	// write patch to temp file
+	patch, err := os.CreateTemp("", "patch")
+	if err != nil {
+		return nil
+	}
+	_, err = patch.Write([]byte(content))
+	if err != nil {
+		return err
+	}
+	// remove patch file
+	defer func() {
+		err := os.Remove(patch.Name())
+		if err != nil {
+			logrus.Warnf("Remove Patch File Error: %v", err)
+		}
+		err = patch.Close()
+		if err != nil {
+			logrus.Warnf("Close Patch File Error: %v", err)
+		}
+	}()
+
+	// checkout target branch
+	err = Checkout(&CheckoutOption{
+		Branch:   opts.Target,
+		RepoPath: opts.RepoPath, // default path is current directory
+	})
+	if err != nil {
+		return err
+	}
+
+	// check patch
+	err = ApplyPatch(&ApplyPatchOption{
+		Patch:    patch.Name(),
+		RepoPath: opts.RepoPath,
+		Check:    true,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Create Commit creates a new commit.
 func (s *CommitService) Create(ctx context.Context, opt *tp.CreateCommitOption) (tp.Commit, error) {
 	if opt == nil {
@@ -79,11 +142,6 @@ func (s *CommitService) Create(ctx context.Context, opt *tp.CreateCommitOption) 
 
 	commit, _, err := s.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Commit{
 		Message: gh.String(opt.PickMessage),
-		Tree: &gh.Tree{
-			SHA:       gh.String(opt.Tree.SHA()),
-			Entries:   nil,
-			Truncated: gh.Bool(false),
-		},
 		Parents: parents,
 	})
 	if err != nil {
@@ -107,7 +165,7 @@ func newCommit(commit *gh.RepositoryCommit) *Commit {
 	}
 
 	entrys := lo.Map(commit.Commit.Tree.Entries, func(t *gh.TreeEntry, i int) tp.TreeEntry {
-		return newTreeEntry(*t)
+		return NewTreeEntry(*t)
 	})
 
 	var truncated bool
@@ -126,7 +184,24 @@ func newCommit(commit *gh.RepositoryCommit) *Commit {
 	}
 }
 
-func newTreeEntry(entry gh.TreeEntry) tp.TreeEntry {
+func NewTree(tree gh.Tree) tp.Tree {
+	entry := lo.Map(tree.Entries, func(t *gh.TreeEntry, i int) tp.TreeEntry {
+		return NewTreeEntry(*t)
+	})
+
+	var truncated bool
+	if tree.Truncated != nil {
+		truncated = *tree.Truncated
+	}
+
+	return &Tree{
+		sha:       *tree.SHA,
+		entries:   entry,
+		truncated: truncated,
+	}
+}
+
+func NewTreeEntry(entry gh.TreeEntry) tp.TreeEntry {
 	return &TreeEntry{
 		sha:       *entry.SHA,
 		path:      *entry.Path,

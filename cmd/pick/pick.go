@@ -51,7 +51,7 @@ func NewPickCommand() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.PathFlag{
 				Name:     "path",
-				Usage:    "Path to the git repo",
+				Usage:    "RepoPath to the git repo",
 				Aliases:  []string{"p"},
 				Required: false,
 				Value:    ".cherry-pick-path.yml",
@@ -94,6 +94,12 @@ func NewPickCommand() *cli.Command {
 				Usage: "Add Cherry-pick summary to the merge request",
 				Value: false,
 			},
+			&cli.StringFlag{
+				Name:    "repo-path",
+				Usage:   "RepoPath to the git repo",
+				Aliases: []string{"repo-path"},
+				Value:   ".",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			logrus.Debugf("Start picking commits")
@@ -134,6 +140,7 @@ func NewPickCommand() *cli.Command {
 				SHA:            &sha,
 				MergeRequestID: mrId,
 				IsSummary:      isSummary,
+				RepoPath:       c.String("repo-path"),
 			}
 
 			/*

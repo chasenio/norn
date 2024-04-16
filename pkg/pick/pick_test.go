@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestPickFeature_DoPickSummaryComment(t *testing.T) {
+func TestPick_CreateSummaryWithTask(t *testing.T) {
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")
 	pickOpt := &Task{
@@ -27,7 +27,7 @@ func TestPickFeature_DoPickSummaryComment(t *testing.T) {
 		MergeRequestID: "60",
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
-	err := pick.CreateSummaryComment(ctx, pickOpt)
+	err := pick.CreateSummaryWithTask(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestPick(t *testing.T) {
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 
-	err := pick.PerformPick(ctx, &CherryPick{
+	err := pick.PerformPick(ctx, &CherryPickOptions{
 		SHA:    *pickOpt.SHA,
 		Repo:   pickOpt.Repo,
 		Target: "master"})
@@ -62,7 +62,7 @@ func TestPick(t *testing.T) {
 	t.Logf("err: %v", err)
 }
 
-func TestPickFeature_IsInMergeRequestComments(t *testing.T) {
+func TestPick_CheckSummaryExist(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")

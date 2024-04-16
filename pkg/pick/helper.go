@@ -3,6 +3,7 @@ package pick
 import (
 	"crypto/md5"
 	"fmt"
+	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"strings"
 )
@@ -60,4 +61,14 @@ func EqualSlice(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+// GetCheckConflictMode returns the check conflict mode for the provider
+func GetCheckConflictMode(provider tp.ProviderType) tp.CheckConflictMode {
+	switch provider {
+	case tp.GitHubProvider:
+		return tp.WithCommand
+	default:
+		return tp.WithAPI
+	}
 }
