@@ -69,8 +69,8 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (result
 	}
 
 	if FindSummaryWithFlag(comments, tp.CherryPickSummaryFlag) == nil {
-		logrus.Errorf("not found pick comment")
-		return nil, errors.New("not found pick comment")
+		logrus.Warnf("not found pick summary, end task")
+		return nil, nil
 	}
 	logrus.Debugf("Start to pick ...")
 

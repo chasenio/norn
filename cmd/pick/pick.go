@@ -11,25 +11,25 @@ import (
 	"os"
 )
 
-var (
-	BuildTime   = ""
-	BuildNumber = ""
-	GitCommit   = ""
-	Version     = "0.0.1"
-)
+type CliInfo struct {
+	BuildTime   string
+	BuildNumber string
+	GitCommit   string
+	Version     string
+}
 
-func NewApp() *cli.App {
+func NewApp(info *CliInfo) *cli.App {
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Fprintf(c.App.Writer,
 			"version: %s\n"+
 				"Git Commit: %s\n"+
 				"Build Time: %s\n"+
 				"Build %s\n",
-			c.App.Version, GitCommit, BuildTime, BuildNumber)
+			c.App.Version, info.GitCommit, info.BuildTime, info.BuildNumber)
 	}
 	return &cli.App{
 		Name:    "Norns",
-		Version: Version,
+		Version: info.Version,
 		Usage:   "Norns is a CLI tool for cherry-picking commits from one ref to another",
 		Commands: []*cli.Command{
 			NewPickCommand(),
@@ -142,16 +142,11 @@ func NewPickCommand() *cli.Command {
 				RepoPath:       c.String("repo-path"),
 			}
 
-			/*
-				TODO Command 和 Backend 之间的场景不太一样
-				 	Command是具体指令，而Backend需要Context
-			*/
-
 			err = p.ProcessPick(ctx, pickOpt)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			return cli.Exit("Success!", 0)
+			return cli.Exit(nil, 0)
 		},
 	}
 }

@@ -7,9 +7,21 @@ import (
 	"os"
 )
 
+var (
+	BuildTime   = ""
+	BuildNumber = ""
+	GitCommit   = ""
+	Version     = "0.0.1"
+)
+
 func main() {
 	logger.SetLogger() // set logger format
-	if err := pick.NewApp().Run(os.Args); err != nil {
+	if err := pick.NewApp(&pick.CliInfo{
+		BuildTime:   BuildTime,
+		BuildNumber: BuildNumber,
+		GitCommit:   GitCommit,
+		Version:     Version,
+	}).Run(os.Args); err != nil {
 		fmt.Println(err.Error())
 	}
 }
