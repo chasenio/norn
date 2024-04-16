@@ -2,8 +2,11 @@ package types
 
 import "errors"
 
-var ErrInvalidOptions = errors.New("invalid parameter, please check your request")
+var (
+	ErrInvalidOptions = errors.New("invalid parameter, please check your request")
+	ErrConflict       = errors.New("conflict")
 
-var NotFound = errors.New("not found")
+	NotFound = errors.New("not found")
 
-var ErrUnknownProvider = errors.New("unknown provider")
+	ErrUnknownProvider = errors.New("unknown provider")
+)

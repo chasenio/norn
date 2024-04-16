@@ -5,7 +5,6 @@ import (
 	"github.com/kentio/norn/internal"
 	"github.com/kentio/norn/pkg/common"
 	"github.com/kentio/norn/pkg/github"
-	"github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"testing"
@@ -126,7 +125,7 @@ func TestParseSelectedBranches(t *testing.T) {
 	}
 }
 
-func TestDoPickToBranchesFromMergeRequest(t *testing.T) {
+func TestPerformPickToBranches(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	ctx := context.Background()
 	token := ""

@@ -31,6 +31,7 @@ type CheckConflictOption struct {
 	Target   string
 	RepoPath string // only used for GitHub, because GitHub not support api for check conflict
 	Mode     CheckConflictMode
+	Pr       int
 }
 
 type Commit interface {

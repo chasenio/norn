@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-git/go-git/v5"
 	gh "github.com/google/go-github/v50/github"
+	tp "github.com/kentio/norn/pkg/types"
 	"os"
 	"os/exec"
 )
@@ -75,7 +76,7 @@ func ApplyPatch(opt *ApplyPatchOption) error {
 
 	err := cmd.Run()
 	if err != nil {
-		return err
+		return tp.ErrConflict
 	}
 	return nil
 }

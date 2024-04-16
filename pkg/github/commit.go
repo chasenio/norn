@@ -75,15 +75,16 @@ func (s *CommitService) CheckConflict(ctx context.Context, opts *tp.CheckConflic
 		Commit: opts.Commit,
 		Owner:  repoOpt.Owner,
 		Repo:   repoOpt.Repo,
+		Pr:     opts.Pr,
 	})
 	if err != nil {
 		return err
 	}
 
 	// write patch to temp file
-	patch, err := os.CreateTemp("", "patch")
+	patch, err := os.CreateTemp(os.TempDir(), "patch")
 	if err != nil {
-		return nil
+		return err
 	}
 	_, err = patch.Write([]byte(content))
 	if err != nil {
@@ -143,6 +144,11 @@ func (s *CommitService) Create(ctx context.Context, opt *tp.CreateCommitOption) 
 	commit, _, err := s.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Commit{
 		Message: gh.String(opt.PickMessage),
 		Parents: parents,
+		Tree: &gh.Tree{
+			SHA:       gh.String(opt.Tree.SHA()),
+			Entries:   nil,
+			Truncated: gh.Bool(false),
+		},
 	})
 	if err != nil {
 		logrus.Errorf("Create Commit Error: %v", err)

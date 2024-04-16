@@ -1,8 +1,11 @@
 package pick
 
-import "testing"
+import (
+	tp "github.com/kentio/norn/pkg/types"
+	"testing"
+)
 
-func TestEqualClice(t *testing.T) {
+func TestEqualSlice(t *testing.T) {
 	a := []string{"a", "b", "c"}
 	b := []string{"a", "b", "c"}
 	c := []string{"a", "b", "d"}
@@ -13,5 +16,24 @@ func TestEqualClice(t *testing.T) {
 	if EqualSlice(a, c) {
 		t.Errorf("EqualSlice(%v, %v) = true, want false", a, c)
 	}
+}
 
+func TestNewResultComment(t *testing.T) {
+	result := []*TaskResult{
+		&TaskResult{
+			State:  SucceedState,
+			Branch: "branch1",
+			Reason: "",
+		},
+		&TaskResult{
+			State:  SucceedState,
+			Branch: "branch2",
+			Reason: "adsfasdf",
+		},
+	}
+	comment, err := NewResultComment(tp.PickResultTemplate, result)
+	if err != nil {
+		t.Error("NewResultComment() = nil, want not nil")
+	}
+	t.Logf("comment: \n%s", comment)
 }

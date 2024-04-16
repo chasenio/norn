@@ -7,8 +7,8 @@ import (
 	"github.com/kentio/norn/internal"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
+	"strconv"
 	"strings"
-	"text/template"
 )
 
 type Service struct {
@@ -21,12 +21,7 @@ type CherryPickOptions struct {
 	Repo     string
 	Target   string
 	RepoPath string
-}
-
-type Result struct {
-	branches []string
-	done     []string
-	failed   []string
+	Pr       int
 }
 
 type Mode int
@@ -47,41 +42,55 @@ type Task struct {
 	RepoPath       string
 }
 
+type State string
+
+const (
+	SucceedState = "Succeed"
+	FailedState  = "Failed"
+	PendingState = "Pending"
+)
+
+type TaskResult struct {
+	State  State
+	Branch string
+	Reason string
+}
+
 func NewPickService(provider tp.Provider, branches []string) *Service {
 	return &Service{provider: provider, branches: branches}
 }
 
 // PerformPickToBranches PerformPick commits from one branches to another
-func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (done []string, failed []string, err error) {
-
+func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (result []*TaskResult, err error) {
 	comments, err := s.provider.Comment().Find(ctx, &tp.FindCommentOption{MergeRequestID: task.MergeRequestID, Repo: task.Repo})
 	if err != nil {
 		logrus.Warnf("Get merge request comments failed: %s", err)
-		return nil, nil, err
+		return nil, err
 	}
 
 	if FindSummaryWithFlag(comments, tp.CherryPickSummaryFlag) == nil {
 		logrus.Errorf("not found pick comment")
-		return nil, nil, errors.New("not found pick comment")
+		return nil, errors.New("not found pick comment")
 	}
 	logrus.Debugf("Start to pick ...")
 
-	// 获取选中的分支
-	selectedBranches, err := s.GetSelectedBranches(ctx, task.Repo, task.MergeRequestID)
+	// get selected branchs
+	selected, err := s.GetSelectedBranches(ctx, task.Repo, task.MergeRequestID)
 	if err != nil {
 		logrus.Warnf("Get Select Ref failed: %+v", err)
-		return nil, nil, err
+		return nil, err
 	}
 
-	if len(selectedBranches) == 0 {
+	if len(selected) == 0 {
 		logrus.Infof("No selected branches")
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	logrus.Infof("Selected branches: %s", selectedBranches)
+	logrus.Infof("Selected branches: %s", selected)
 
 	// PerformPick commits from one branch to another
-	for _, branch := range selectedBranches {
+	for _, branch := range selected {
+		var state State
 		if branch == task.Form {
 			logrus.Debugf("Skip form branch: %s", branch)
 			continue // skip the branch, and pick commits from the next branch
@@ -96,34 +105,36 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (done [
 
 		logrus.Debugf("Picking %s to %s", *task.SHA, branch)
 		// PerformPick commits
-		pickOption := &CherryPickOptions{
+		pr, _ := strconv.Atoi(task.MergeRequestID)
+		err = s.PerformPick(ctx, &CherryPickOptions{
 			SHA:      *task.SHA,
 			Repo:     task.Repo,
 			Target:   branch,
 			RepoPath: task.RepoPath,
-		}
-		err = s.PerformPick(ctx, pickOption)
+			Pr:       pr,
+		})
 		if err != nil {
-			failed = append(failed, branch)
-			continue
+			state = FailedState
+			result = append(result, &TaskResult{State: state, Branch: branch, Reason: err.Error()})
+		} else {
+			state = SucceedState
+			result = append(result, &TaskResult{State: state, Branch: branch})
 		}
-		done = append(done, branch)
-		logrus.Infof("Picked %s to %s", pickOption.SHA, pickOption.Target)
+		logrus.Infof("Pick %s to %s %s", *task.SHA, branch, state)
 	}
+	logrus.Infof("Picke Result %v", result)
 
-	logrus.Infof("Done: %s Failed: %s", done, failed)
-
-	if len(done) == 0 && len(failed) == 0 {
+	if len(result) == 0 {
 		logrus.Warnf("No branch to pick")
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	// generate comment
 	logrus.Infof("Generate pick result comment")
-	pickResultComment, err := NewSummaryComment(task.IsSummary, &Result{done: done, failed: failed})
+	pickResultComment, err := NewResultComment(tp.PickResultTemplate, result)
 	if err != nil {
 		logrus.Errorf("Generate pick result comment failed: %s", err)
-		return nil, nil, err
+		return nil, err
 	}
 
 	// submit pick result to merge request
@@ -133,9 +144,9 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task) (done [
 		Body:           pickResultComment,
 	})
 	if err != nil {
-		return done, failed, err
+		return nil, err
 	}
-	return done, failed, nil
+	return result, nil
 }
 
 func (s *Service) PerformPick(ctx context.Context, opt *CherryPickOptions) error {
@@ -184,10 +195,12 @@ func (s *Service) PerformPick(ctx context.Context, opt *CherryPickOptions) error
 
 	// Check conflict
 	err = s.provider.Commit().CheckConflict(ctx, &tp.CheckConflictOption{
-		Repo:   opt.Repo,
-		Commit: opt.SHA,
-		Target: opt.Target,
-		Mode:   GetCheckConflictMode(s.provider.ProviderID()),
+		Repo:     opt.Repo,
+		Commit:   opt.SHA,
+		Target:   opt.Target,
+		Mode:     GetCheckConflictMode(s.provider.ProviderID()),
+		Pr:       opt.Pr,
+		RepoPath: opt.RepoPath,
 	})
 	if err != nil {
 		logrus.Errorf("failed to check conflict: %+v", err)
@@ -234,7 +247,7 @@ func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error {
 	}
 
 	// generate comment body
-	summaryComment, err := NewSummaryComment(task.IsSummary, &Result{branches: targets})
+	summaryComment, err := NewSummaryComment(tp.CherryPickTaskSummaryTemplate, targets)
 	if err != nil {
 		logrus.Errorf("NewSummaryComment failed: %+v", err)
 		return err
@@ -293,7 +306,7 @@ func (s *Service) ProcessPick(ctx context.Context, task *Task) error {
 			logrus.Errorf("create summary err: %s", err)
 		}
 	} else {
-		_, _, err = s.PerformPickToBranches(ctx, task)
+		_, err = s.PerformPickToBranches(ctx, task)
 		if err != nil {
 			logrus.Errorf("perform pick err: %s", err)
 		}
@@ -341,99 +354,4 @@ func FindSummaryWithFlag(comments []tp.Comment, flag string) tp.Comment {
 		}
 	}
 	return nil
-}
-
-// NewSummaryComment generate task comment for pr
-func NewSummaryComment(isSummary bool, opt *Result) (string, error) {
-
-	// generate comment for summary, before pick
-	if isSummary {
-		content, err := NewSelectComment(tp.CherryPickTaskSummaryTemplate, opt.branches)
-		if err != nil {
-			return "", fmt.Errorf("failed to execute template: %w", err)
-		}
-		return content.String(), nil
-	}
-
-	// generate comment for done and failed, after pick
-	var doneString, failedString string
-
-	// render done summary
-	if len(opt.done) > 0 {
-		logrus.Debugf("render done summary: %s", opt.done)
-		content, err := NewResultComment(tp.CherryPickTaskDoneTemplate, opt.done)
-		if err != nil {
-			return "", fmt.Errorf("failed to execute template: %w", err)
-		}
-		doneString = content.String()
-	}
-
-	// render failed summary
-	if len(opt.failed) > 0 {
-
-		logrus.Debugf("render failed summary: %s", opt.failed)
-		content, err := NewResultComment(tp.CherryPickTaskFailedTemplate, opt.failed)
-		if err != nil {
-			logrus.Errorf("failed to execute template: %s \n branches: %s \n err: %+v", tp.CherryPickTaskFailedTemplate, opt.failed, err)
-			return "", err
-		}
-		failedString = content.String()
-	}
-	var summary string
-
-	if len(opt.done) > 0 {
-		summary += doneString
-	}
-
-	// if both done and failed, add a separator
-	if len(opt.failed) > 0 && len(opt.done) > 0 {
-		summary += "---\n" +
-			failedString
-	} else {
-		summary += failedString
-	}
-
-	return summary, nil
-}
-
-// NewSelectComment generate comment content
-func NewSelectComment(layout string, branches []string) (content strings.Builder, err error) {
-	var taskBranchLine strings.Builder
-	type Msg struct {
-		Message string `json:"message"`
-	}
-	for _, branch := range branches {
-		taskBranchLine.WriteString("- [x] " + branch + "\n")
-	}
-	tpl := template.Must(template.New("message").Parse(layout))
-	data := Msg{
-		Message: taskBranchLine.String(),
-	}
-	err = tpl.Execute(&content, data)
-	if err != nil {
-		logrus.Warnf("Failed to execute template: %s \n branches: %s \n err: %+v", layout, branches, err)
-		return content, fmt.Errorf("failed to execute template: %w", err)
-	}
-	return content, nil
-}
-
-// NewResultComment generate comment content
-func NewResultComment(layout string, branches []string) (content strings.Builder, err error) {
-	var taskBranchLine strings.Builder
-	type Msg struct {
-		Message string `json:"message"`
-	}
-	for _, branch := range branches {
-		taskBranchLine.WriteString("- " + branch + "\n")
-	}
-	tpl := template.Must(template.New("message").Parse(layout))
-	data := Msg{
-		Message: taskBranchLine.String(),
-	}
-	err = tpl.Execute(&content, data)
-	if err != nil {
-		logrus.Warnf("Failed to execute template: %s \n branches: %s err: %+v", layout, branches, err)
-		return content, err
-	}
-	return content, nil
 }

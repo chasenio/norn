@@ -4,8 +4,10 @@ import (
 	"crypto/md5"
 	"fmt"
 	tp "github.com/kentio/norn/pkg/types"
+	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
 	"strings"
+	"text/template"
 )
 
 func sumMd5(s string) string {
@@ -70,5 +72,70 @@ func GetCheckConflictMode(provider tp.ProviderType) tp.CheckConflictMode {
 		return tp.WithCommand
 	default:
 		return tp.WithAPI
+	}
+}
+
+// NewResultComment generate comment content
+func NewResultComment(layout string, result []*TaskResult) (string, error) {
+	var resultContent strings.Builder
+	var content strings.Builder
+	type Msg struct {
+		Message string `json:"message"`
+	}
+	table := tablewriter.NewWriter(&resultContent)
+	table.SetHeader([]string{"Branch", "State", "Reason"})
+	for _, i := range result {
+		s := fmt.Sprintf("%s %s", getStateEmoji(i.State), i.State)
+		table.Append([]string{i.Branch, s, i.Reason})
+	}
+	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
+	table.Render()
+
+	tpl := template.Must(template.New("message").Parse(layout))
+	data := Msg{
+		Message: resultContent.String(),
+	}
+	err := tpl.Execute(&content, data)
+	if err != nil {
+		logrus.Errorf("Failed to execute NewResultComment err: %+v", err)
+		return content.String(), err
+	}
+	return content.String(), nil
+}
+
+// NewSummaryComment NewSelectComment generate comment content
+func NewSummaryComment(layout string, branches []string) (string, error) {
+	var taskBranchLine strings.Builder
+	var content strings.Builder
+	type Msg struct {
+		Message string `json:"message"`
+	}
+	for _, branch := range branches {
+		taskBranchLine.WriteString("- [x] " + branch + "\n")
+	}
+	tpl := template.Must(template.New("message").Parse(layout))
+	data := Msg{
+		Message: taskBranchLine.String(),
+	}
+	err := tpl.Execute(&content, data)
+	if err != nil {
+		logrus.Warnf("Failed to execute template: %s \n branches: %s \n err: %+v", layout, branches, err)
+		return content.String(), fmt.Errorf("failed to execute template: %w", err)
+	}
+	return content.String(), nil
+}
+
+// getStateEmoji returns the emoji for the state
+func getStateEmoji(state State) string {
+	switch state {
+	case SucceedState:
+		return "✅"
+	case FailedState:
+		return "❌"
+	case PendingState:
+		return "⏳"
+	default:
+		return "❓"
 	}
 }
