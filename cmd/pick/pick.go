@@ -95,10 +95,9 @@ func NewPickCommand() *cli.Command {
 				Value: false,
 			},
 			&cli.StringFlag{
-				Name:    "repo-path",
-				Usage:   "RepoPath to the git repo",
-				Aliases: []string{"repo-path"},
-				Value:   ".",
+				Name:  "repo-path",
+				Usage: "RepoPath to the git repo",
+				Value: ".",
 			},
 		},
 		Action: func(c *cli.Context) error {
