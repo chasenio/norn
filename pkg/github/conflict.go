@@ -2,9 +2,10 @@ package github
 
 import (
 	"context"
-	"github.com/go-git/go-git/v5"
+	"fmt"
 	gh "github.com/google/go-github/v50/github"
 	tp "github.com/kentio/norn/pkg/types"
+	"github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 )
@@ -33,24 +34,14 @@ type CheckoutOption struct {
 }
 
 func Checkout(opt *CheckoutOption) error {
-	repo, err := git.PlainOpen(opt.RepoPath)
+	remote := fmt.Sprintf("remotes/origin/%s", opt.Branch)
+	cmd := exec.Command("git", "checkout", "-b", opt.Branch, remote, "-f")
+	cmd.Dir = opt.RepoPath
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
 	if err != nil {
-		return err
-	}
-	branch, err := repo.Branch(opt.Branch)
-	if err != nil {
-		return err
-	}
-	w, err := repo.Worktree()
-	if err != nil {
-		return err
-
-	}
-	err = w.Checkout(&git.CheckoutOptions{
-		Branch: branch.Merge,
-		Force:  true,
-	})
-	if err != nil {
+		logrus.Errorf("checkout branch failed: %s", err.Error())
 		return err
 	}
 	return nil
