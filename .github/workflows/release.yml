@@ -38,6 +38,8 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Build binary
+        env:
+          BUILDNUMBER: ${{ github.run_number }}
         run: |
           make -j release
           ls -lash bin

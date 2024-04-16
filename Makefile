@@ -11,7 +11,7 @@ LDFLAGS = -extldflags \
 		  -X "main.Version=$(VERSION)" \
 		  -X "main.BuildTime=$(BUILDTIME)" \
 		  -X "main.GitCommit=$(GITCOMMIT)" \
-		  -X "main.BuildNumber=$(BUILDNUMER)"
+		  -X "main.BuildNumber=$(BUILDNUMBER)"
 
 GOBUILD=CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)"
 CLI=cmd/cli.go
