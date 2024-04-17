@@ -308,9 +308,13 @@ func (s *Service) ProcessPick(ctx context.Context, task *Task) error {
 	} else {
 		// check if pick result is exist, if existed, skip
 		comments, result, err := s.FindCommentWithTask(ctx, task, tp.CherryPickResultFlag)
-		if err != nil || result != nil {
-			logrus.Warnf("pick result is exist or err: %s", err.Error())
+		if result != nil {
+			logrus.Warnf("pick result is exist %s.", result)
 			return nil
+		}
+		if err != nil {
+			logrus.Warnf("get pick result err: %s", err.Error())
+			return err
 		}
 
 		// check if summary comment is exist, if not exist, skip
