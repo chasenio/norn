@@ -32,8 +32,12 @@ func (s *ReferenceService) Get(ctx context.Context, opt *tp.GetRefOption) (*tp.R
 	logrus.Debugf("Get Reference Opt: %+v", opt)
 
 	branchRef, response, err := s.client.Git.GetRef(ctx, repoOpt.Owner, repoOpt.Repo, opt.Ref)
-	if err != nil {
+	if response.StatusCode == http.StatusNotFound {
 		logrus.Debugf("Get Reference Response: %+v", response)
+		return nil, tp.NotFound
+	}
+	if err != nil {
+		logrus.Error("Get Reference Response: %+v", response)
 		return nil, err
 	}
 	logrus.Debugf("Get Reference: %+v", *branchRef)
