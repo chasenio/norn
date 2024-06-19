@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"errors"
-	gh "github.com/google/go-github/v50/github"
+	gh "github.com/google/go-github/v60/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -149,7 +149,7 @@ func (s *CommitService) Create(ctx context.Context, opt *tp.CreateCommitOption) 
 			Entries:   nil,
 			Truncated: gh.Bool(false),
 		},
-	})
+	}, nil)
 	if err != nil {
 		logrus.Errorf("Create Commit Error: %v", err)
 		return nil, err

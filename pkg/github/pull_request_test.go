@@ -15,8 +15,8 @@ func TestPullRequestService_Get(t *testing.T) {
 	pullRequestClient := NewPullRequestService(client)
 
 	pr, err := pullRequestClient.Get(ctx, &types.GetMergeRequestOption{
-		Repo:    "kentio/norn",
-		MergeID: "1",
+		Repo:    "",
+		MergeID: "",
 	})
 	if err != nil {
 		t.Fatalf("err: %v", err)

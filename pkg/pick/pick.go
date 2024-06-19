@@ -2,8 +2,6 @@ package pick
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"github.com/kentio/norn/internal"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -17,9 +15,9 @@ type Service struct {
 }
 
 type CherryPickOptions struct {
-	SHA      string
+	SHA      string // commit sha
 	Repo     string
-	Target   string
+	Target   string // target branch
 	RepoPath string
 	Pr       int
 }
@@ -143,6 +141,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 		MergeRequestID: task.MergeRequestID,
 		Body:           content,
 	})
+	logrus.Infof("Submit Result Comment: \n%s", content)
 	if err != nil {
 		return nil, err
 	}
@@ -155,82 +154,12 @@ func (s *Service) PerformPick(ctx context.Context, opt *CherryPickOptions) error
 		return ErrInvalidOptions
 	}
 
-	// 1. get reference
-	reference, err := s.provider.Reference().Get(ctx, &tp.GetRefOption{
-		Repo: opt.Repo,
-		Ref:  fmt.Sprintf("refs/heads/%s", opt.Target),
+	err := s.provider.Pick().Pick(ctx, opt.Repo, &tp.PickOption{
+		Branch: opt.Target,
+		SHA:    opt.SHA,
 	})
 	if err != nil {
-		logrus.Errorf("failed to get reference: %+v", err)
-		return err
-	}
-
-	// 2. get commit
-	commit, err := s.provider.Commit().Get(ctx, &tp.GetCommitOption{
-		Repo: opt.Repo,
-		SHA:  opt.SHA,
-	})
-	if err != nil {
-		logrus.Errorf("failed to get commit: %+v", err)
-		return err
-	}
-
-	// 2.1 if last commit message is same as pick message, skip
-	// TODO enhance the logic, last commit message may not be the pick message
-	lastCommit, err := s.provider.Commit().Get(ctx, &tp.GetCommitOption{Repo: opt.Repo, SHA: reference.SHA})
-	if err != nil {
-		logrus.Warnf("failed to get last commit: %+v", err)
-		return err
-	}
-	pickMessage := fmt.Sprintf("%s\n\n(cherry picked from commit %s)", commit.Message(), opt.SHA[:7])
-
-	// if match message, skip
-	lastCommitMessageMd5 := sumMd5(lastCommit.Message())
-	pickMessageMd5 := sumMd5(pickMessage)
-	logrus.Debugf("last commit message md5: %s, pick message md5: %s", lastCommitMessageMd5, pickMessageMd5)
-	if lastCommitMessageMd5 == pickMessageMd5 {
-		logrus.Warnf("reference %s last commit message is same as pick message, skip", reference.SHA)
-		return errors.New("last commit message is same as pick message")
-	}
-
-	// Check conflict
-	err = s.provider.Commit().CheckConflict(ctx, &tp.CheckConflictOption{
-		Repo:     opt.Repo,
-		Commit:   opt.SHA,
-		Target:   opt.Target,
-		Mode:     GetCheckConflictMode(s.provider.ProviderID()),
-		Pr:       opt.Pr,
-		RepoPath: opt.RepoPath,
-	})
-	if err != nil {
-		logrus.Errorf("failed to check conflict: %+v", err)
-		return err
-	}
-
-	// 3. create commit
-	createCommit, err := s.provider.Commit().Create(ctx, &tp.CreateCommitOption{
-		Repo:        opt.Repo,
-		Tree:        commit.Tree(),
-		SHA:         commit.SHA(),
-		PickMessage: pickMessage,
-		Parents: []string{
-			reference.SHA,
-		}})
-
-	if err != nil {
-		logrus.Errorf("failed to create commit: %+v", err)
-		return err
-	}
-
-	// 4. update reference
-	_, err = s.provider.Reference().Update(ctx, &tp.UpdateOption{
-		Repo: opt.Repo,
-		Ref:  fmt.Sprintf("refs/heads/%s", opt.Target),
-		SHA:  createCommit.SHA(),
-	})
-
-	if err != nil {
-		logrus.Errorf("failed to update reference: %+v", err)
+		logrus.Warnf("Pick failed: %s", err)
 		return err
 	}
 	return nil

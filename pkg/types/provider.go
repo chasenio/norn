@@ -12,4 +12,5 @@ type Provider interface {
 	MergeRequest() MergeRequestService
 	Comment() CommentService
 	ProviderID() ProviderType
+	Pick() PickService
 }

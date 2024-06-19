@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	gh "github.com/google/go-github/v50/github"
+	gh "github.com/google/go-github/v60/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"os/exec"
@@ -19,6 +19,8 @@ type CreatePatchOption struct {
 	Pr     int
 }
 
+// TOOD 这个方案不太好，会超过github的限制
+// https://github.com/breadth-studio/moon/actions/runs/9327686685/job/25677906013?pr=261#step:3:105
 func CreatePatchWithClient(ctx context.Context, opt *CreatePatchOption) (string, error) {
 	patch, _, err := opt.Client.PullRequests.GetRaw(ctx, opt.Owner, opt.Repo, opt.Pr, gh.RawOptions{
 		Type: gh.Patch,

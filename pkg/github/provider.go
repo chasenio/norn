@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	gh "github.com/google/go-github/v50/github"
+	gh "github.com/google/go-github/v60/github"
 	tp "github.com/kentio/norn/pkg/types"
 )
 
@@ -14,6 +14,7 @@ type Provider struct {
 	referenceService    *ReferenceService
 	mergeRequestService *PullRequestService
 	commentService      *CommentService
+	pickService         *PickService
 }
 
 func NewProvider(ctx context.Context, token string) *Provider {
@@ -24,6 +25,7 @@ func NewProvider(ctx context.Context, token string) *Provider {
 		referenceService:    NewReferenceService(client),
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
+		pickService:         NewPickService(client),
 	}
 }
 
@@ -36,6 +38,7 @@ func NewProviderWithClient(client *gh.Client) *Provider {
 		referenceService:    NewReferenceService(client),
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
+		pickService:         NewPickService(client),
 	}
 }
 
@@ -57,4 +60,8 @@ func (p *Provider) Comment() tp.CommentService {
 
 func (p *Provider) ProviderID() tp.ProviderType {
 	return p.providerID
+}
+
+func (p *Provider) Pick() tp.PickService {
+	return p.pickService
 }

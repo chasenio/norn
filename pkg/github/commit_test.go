@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"github.com/google/go-github/v50/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/kentio/norn/pkg/types"
 	"golang.org/x/oauth2"
 	"testing"
@@ -27,8 +27,8 @@ func TestCommitService_Get(t *testing.T) {
 	commitClient := NewCommitService(client)
 
 	commit, err := commitClient.Get(ctx, &types.GetCommitOption{
-		Repo: "kentio/norn",
-		SHA:  "20f4e071fe78c8523cc9cdb65b7442af7707a891",
+		Repo: "",
+		SHA:  "",
 	})
 	if err != nil {
 		t.Fatalf("err: %v", err)

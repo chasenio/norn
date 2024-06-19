@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	gh "github.com/google/go-github/v50/github"
+	gh "github.com/google/go-github/v60/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -56,7 +56,6 @@ func (s *CommentService) Create(ctx context.Context, opt *tp.CreateCommentOption
 		logrus.Warnf("Add comment status code: %v", response.Status)
 		return nil, fmt.Errorf("failed to add comment: %v", response.Status)
 	}
-	logrus.Infof("Add Comment : %+v", *prComment)
 	return newIssueComment(prComment), nil
 }
 

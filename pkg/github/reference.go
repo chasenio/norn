@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	gh "github.com/google/go-github/v50/github"
+	gh "github.com/google/go-github/v60/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -37,7 +37,7 @@ func (s *ReferenceService) Get(ctx context.Context, opt *tp.GetRefOption) (*tp.R
 		return nil, tp.NotFound
 	}
 	if err != nil {
-		logrus.Error("Get Reference Response: %+v", response)
+		logrus.Errorf("Get Reference Response: %+v", response)
 		return nil, err
 	}
 	logrus.Debugf("Get Reference: %+v", *branchRef)
@@ -74,7 +74,7 @@ func (s *ReferenceService) Update(ctx context.Context, opt *tp.UpdateOption) (*t
 	}, false)
 	logrus.Debugf("Update Reference Response: %+v", response)
 	if err != nil {
-		logrus.Debugf("Update Reference Error: %v", err)
+		logrus.Errorf("Update Reference Error: %v", err)
 		return nil, err
 	}
 	if response.StatusCode == http.StatusUnprocessableEntity {

@@ -5,8 +5,8 @@ import (
 	"github.com/kentio/norn/internal"
 	"github.com/kentio/norn/pkg/common"
 	"github.com/kentio/norn/pkg/github"
+	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
-	"strings"
 	"testing"
 )
 
@@ -14,16 +14,16 @@ func TestPick_CreateSummaryWithTask(t *testing.T) {
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")
 	pickOpt := &Task{
-		Repo: "kentio/test_cherry_pick",
+		Repo: "kentio/pick",
 		Branches: []string{
-			"release/23.03",
-			"release/23.04",
+			"r1",
+			"r2",
 			"master",
 		},
-		Form:           "release/23.03",
-		IsSummary:      true,
-		SHA:            common.String("cc382f5c74a879bda50cc5a8a73090ba83068733"),
-		MergeRequestID: "60",
+		Form:           "r1",
+		IsSummary:      false,
+		SHA:            common.String(""),
+		MergeRequestID: "64",
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 	err := pick.CreateSummaryWithTask(ctx, pickOpt)
@@ -37,23 +37,26 @@ func TestPick(t *testing.T) {
 	ctx := context.Background()
 	provider := github.NewProvider(ctx, "")
 	task := &Task{
-		Repo: "kentio/test_cherry_pick",
+		Repo: "kentio/pick",
 		Branches: []string{
-			"release/23.03",
-			"release/23.04",
+			"r1",
+			"r2",
 			"master",
 		},
-		Form:           "release/23.03",
+		Form:           "r1",
 		IsSummary:      false,
-		SHA:            common.String("9fe34a912edd44ef07052aa1305aea72adee3638"),
-		MergeRequestID: "59",
+		SHA:            common.String(""),
+		MergeRequestID: "2",
 	}
-	pick := NewPickService(provider, pickOpt.Branches)
+	pick := NewPickService(provider, task.Branches)
 
+	//err := pick.ProcessPick(ctx, task)
 	err := pick.PerformPick(ctx, &CherryPickOptions{
-		SHA:    *pickOpt.SHA,
-		Repo:   pickOpt.Repo,
-		Target: "master"})
+		SHA:    *task.SHA,
+		Repo:   task.Repo,
+		Target: "master",
+		Pr:     64,
+	})
 
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -139,105 +142,44 @@ func TestPerformPickToBranches(t *testing.T) {
 			"master",
 		},
 		Form:           "release/23.03",
-		IsSummary:      false,
-		SHA:            common.String("a569472376cd1f5ff8403811ceb67b9f809f961f"),
-		MergeRequestID: "60",
+		IsSummary:      true,
+		SHA:            common.String(""),
+		MergeRequestID: "66",
 	}
 	pick := NewPickService(provider, pickOpt.Branches)
 
+	_, comment, err := pick.FindCommentWithTask(ctx, pickOpt, tp.CherryPickSummaryFlag)
+
 	// test is summary task
-	done, faild, err := pick.PerformPickToBranches(ctx, pickOpt)
+	result, err := pick.PerformPickToBranches(ctx, pickOpt, comment)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	t.Logf("done: %v, faild: %v", done, faild)
+	t.Logf("result %v", &result)
 
 	// test done comment
 
 }
 
-func TestNewMergeReqeustComment(t *testing.T) {
-	// test is summary task comment
-	isSummaryOpt := Result{
-		branches: []string{"master", "dev"},
-	}
-	isSummaryResult, err := NewSummaryComment(true, &isSummaryOpt)
+func Test_GetTree(t *testing.T) {
+	ctx := context.Background()
+	client := github.NewGithubClient(ctx, "")
+	tree, _, err := client.Git.GetTree(ctx, "", "", "", true)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	t.Logf("isSummaryResult: %s", isSummaryResult)
+	for _, v := range tree.Entries {
+		t.Logf("tree: %s", *v.Path)
+	}
 
-	// test done comment
-	doneOpt := Result{
-		done: []string{"master", "dev"},
-	}
-	doneResult, err := NewSummaryComment(false, &doneOpt)
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	t.Logf("doneResult: %s", doneResult)
-	//if !strings.Contains(doneResult, global.CherryPickTaskDoneTemplate) {
-	//	t.Fatalf("err: %v", err)
-	//}
-
-	// test failed comment
-	failedOpt := Result{
-		failed: []string{"master", "dev"},
-	}
-	failedResult, err := NewSummaryComment(false, &failedOpt)
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	t.Logf("failedResult: %s", failedResult)
-
-	// test done and failed comment
-	doneAndFailedOpt := Result{
-		done:   []string{"master", "dev"},
-		failed: []string{"aa", "bb"},
-	}
-	doneAndFailedResult, err := NewSummaryComment(false, &doneAndFailedOpt)
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	t.Logf("doneAndFailedResult: %s", doneAndFailedResult)
 }
 
-func TestNewCommentContent(t *testing.T) {
-	branches := []string{"master", "dev"}
-
-	taskSummaryResult, err := NewSelectComment(types.CherryPickTaskSummaryTemplate, branches)
+func Test_CreateTree(t *testing.T) {
+	ctx := context.Background()
+	client := github.NewGithubClient(ctx, "")
+	tree, _, err := client.Git.CreateTree(ctx, "", "", "", nil)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	taskSummaryContent := taskSummaryResult.String()
-	for _, v := range branches {
-		if !strings.Contains(taskSummaryContent, v) {
-			t.Fatalf("err: %v", err)
-		}
-	}
-
-	// test Done template
-	doneResult, err := NewSelectComment(types.CherryPickTaskDoneTemplate, branches)
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	doneContent := doneResult.String()
-	for _, v := range branches {
-		if !strings.Contains(doneContent, v) {
-			t.Fatalf("err: %v", err)
-		}
-	}
-
-	// test Failed template
-	failedResult, err := NewSelectComment(types.CherryPickTaskFailedTemplate, branches)
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	failedContent := failedResult.String()
-	for _, v := range branches {
-		if !strings.Contains(failedContent, v) {
-			t.Fatalf("err: %v", err)
-		}
-	}
-
+	t.Logf("tree: %v", tree)
 }
