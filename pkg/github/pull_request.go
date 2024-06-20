@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	gh "github.com/google/go-github/v60/github"
+	gh "github.com/google/go-github/v62/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"strconv"
@@ -60,7 +60,7 @@ func (s *PullRequestService) Get(ctx context.Context, opt *tp.GetMergeRequestOpt
 	pr, response, err := s.client.PullRequests.Get(ctx, repoOpt.Owner, repoOpt.Repo, mergeId)
 	logrus.Debugf("Get Pull Request Response: %+v", *response)
 	if err != nil {
-		logrus.Debugf("Get PR Error: %+v", err)
+		logrus.Errorf("Get PR Error: %+v", err)
 		return nil, err
 	}
 	return newPullRequest(pr), nil

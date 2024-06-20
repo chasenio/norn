@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v62/github"
 	"github.com/kentio/norn/pkg/types"
 	"golang.org/x/oauth2"
 	"testing"

@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"errors"
-	gh "github.com/google/go-github/v60/github"
+	gh "github.com/google/go-github/v62/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"

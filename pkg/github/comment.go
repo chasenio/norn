@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	gh "github.com/google/go-github/v60/github"
+	gh "github.com/google/go-github/v62/github"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -81,10 +81,9 @@ func (s *CommentService) Find(ctx context.Context, opt *tp.FindCommentOption) ([
 	// find comment
 	comments, response, err := s.client.Issues.ListComments(ctx, repoOpt.Owner, repoOpt.Repo, mrId, nil)
 	if err != nil {
-		logrus.Warnf("Failed to list comments request: %v", err)
+		logrus.Warnf("Failed to list comments request: %v， response: %v", err, response)
 		return nil, err
 	}
-	logrus.Debugf("Find Comment Response: %d", response.StatusCode)
 
 	return lo.Map(comments, func(c *gh.IssueComment, _ int) tp.Comment {
 		return newIssueComment(c)
