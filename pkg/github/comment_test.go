@@ -13,7 +13,7 @@ func TestPullRequestService_FindComment(t *testing.T) {
 	token := ""
 	repo := "kentio/test_cherry_pick"
 	mergeId := "53"
-	client := NewProvider(ctx, token)
+	client := NewProvider(ctx, &tp.CreateProviderOption{Token: token})
 
 	comments, err := client.Comment().Find(ctx, &tp.FindCommentOption{Repo: repo, MergeRequestID: mergeId})
 	if err != nil {
