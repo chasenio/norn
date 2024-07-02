@@ -52,7 +52,7 @@ jobs:
         with:
           files: bin/*
           draft: false
-          prerelease: true
+          prerelease: false
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           append_body: true
