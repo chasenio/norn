@@ -49,7 +49,7 @@ func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption)
 	// get target ref details
 	targetRef, _, err := c.client.Git.GetRef(ctx, repoOpt.Owner, repoOpt.Repo, "refs/heads/"+opt.Branch)
 	if err != nil {
-		return err
+		return tp.NotFound
 	}
 
 	// get target latest commit details

@@ -29,7 +29,8 @@ type CreateCommentOption struct {
 
 type UpdateCommentOption struct {
 	// CommentID is the ID of the comment to update.
-	CommentID string
-	Repo      string
-	Body      string
+	CommentID      string
+	Repo           string
+	Body           string
+	MergeRequestID string
 }

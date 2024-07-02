@@ -6,6 +6,7 @@ import (
 	"github.com/kentio/norn/internal"
 	"github.com/kentio/norn/pkg/common"
 	"github.com/kentio/norn/pkg/pick"
+	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -115,7 +116,7 @@ func NewPickCommand() *cli.Command {
 				return cli.Exit("Vendor or token is empty", 1)
 			}
 
-			provider, err := common.NewProvider(ctx, vendor, token)
+			provider, err := common.NewProvider(ctx, vendor, &tp.CreateProviderOption{Token: token})
 			if err != nil {
 				return cli.Exit("Unknown provider", 1)
 			}

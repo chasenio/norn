@@ -17,8 +17,13 @@ type Provider struct {
 	pickService         *PickService
 }
 
-func NewProvider(ctx context.Context, token string) *Provider {
-	client := NewGithubClient(ctx, token)
+func NewProvider(ctx context.Context, opt *tp.CreateProviderOption) *Provider {
+	var client *gh.Client
+	if opt.BaseUrl != nil {
+		client = NewGitHubWithBaseUrl(ctx, opt)
+	} else {
+		client = NewGithubClient(ctx, opt.Token)
+	}
 	return &Provider{
 		providerID:          tp.GitHubProvider,
 		commitService:       NewCommitService(client),
