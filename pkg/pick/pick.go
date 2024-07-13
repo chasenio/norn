@@ -11,7 +11,6 @@ import (
 
 type Service struct {
 	provider tp.Provider
-	branches []string
 }
 
 type CherryPickOptions struct {
@@ -54,8 +53,8 @@ type TaskResult struct {
 	Reason string
 }
 
-func NewPickService(provider tp.Provider, branches []string) *Service {
-	return &Service{provider: provider, branches: branches}
+func NewPickService(provider tp.Provider) *Service {
+	return &Service{provider: provider}
 }
 
 func (s *Service) FindCommentWithTask(ctx context.Context, task *Task, flag string) ([]tp.Comment, tp.Comment, error) {
