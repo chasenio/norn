@@ -18,6 +18,7 @@ type Provider interface {
 	Reference() ReferenceService
 	MergeRequest() MergeRequestService
 	Comment() CommentService
+	Repository() RepositoryService
 	ProviderID() ProviderType
 	Pick() PickService
 }

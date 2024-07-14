@@ -15,6 +15,7 @@ type Provider struct {
 	mergeRequestService *PullRequestService
 	commentService      *CommentService
 	pickService         *PickService
+	repositoryService   *RepositoryService
 }
 
 func NewProvider(ctx context.Context, opt *tp.CreateProviderOption) *Provider {
@@ -31,6 +32,7 @@ func NewProvider(ctx context.Context, opt *tp.CreateProviderOption) *Provider {
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
 		pickService:         NewPickService(client),
+		repositoryService:   NewRepositoryService(client),
 	}
 }
 
@@ -44,6 +46,7 @@ func NewProviderWithClient(client *gh.Client) *Provider {
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
 		pickService:         NewPickService(client),
+		repositoryService:   NewRepositoryService(client),
 	}
 }
 
@@ -61,6 +64,10 @@ func (p *Provider) MergeRequest() tp.MergeRequestService {
 
 func (p *Provider) Comment() tp.CommentService {
 	return p.commentService
+}
+
+func (p *Provider) Repository() tp.RepositoryService {
+	return p.repositoryService
 }
 
 func (p *Provider) ProviderID() tp.ProviderType {
