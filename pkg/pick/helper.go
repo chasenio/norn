@@ -39,14 +39,14 @@ func generateTargetBranches(task *Task) []string {
 	var startFlag bool
 	for _, branch := range task.Branches {
 		// Skip branches before the 'From' branch in the list
-		if branch == task.Form {
+		if branch == task.From {
 			startFlag = true
 			continue
 		}
 		if startFlag {
 			targets = append(targets, branch)
 		} else {
-			logrus.Debugf("Skipping branch: %s, from: %s", branch, task.Form)
+			logrus.Debugf("Skipping branch: %s, from: %s", branch, task.From)
 		}
 	}
 	return targets
