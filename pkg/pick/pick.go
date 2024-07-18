@@ -31,7 +31,7 @@ const (
 type Task struct {
 	Repo           string
 	Branches       []string // target branches
-	Form           string   // from branch
+	From           string   // from branch
 	SHA            *string
 	MergeRequestID string
 	IsSummary      bool // generate summary comment
@@ -89,7 +89,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 	// PerformPick commits from one branch to another
 	for _, branch := range selected {
 		var state State
-		if branch == task.Form {
+		if branch == task.From {
 			logrus.Debugf("Skip form branch: %s", branch)
 			continue // skip the branch, and pick commits from the next branch
 		}

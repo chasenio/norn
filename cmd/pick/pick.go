@@ -136,7 +136,7 @@ func NewPickCommand() *cli.Command {
 			pickOpt := &pick.Task{
 				Repo:           repo,
 				Branches:       profile.Branches,
-				Form:           from,
+				From:           from,
 				SHA:            &sha,
 				MergeRequestID: mrId,
 				IsSummary:      isSummary,
