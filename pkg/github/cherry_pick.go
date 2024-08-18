@@ -115,11 +115,12 @@ func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption)
 	}
 	// merge pick commit to temp branch
 	base := strings.Split(tempRef, "/")[2]
+	logrus.Warnf("temp ref: %s base: %s", tempRef, base)
 	// merge pick commit to temp branch
 	mergeSha, err := c.Merge(ctx, &MergeOption{
 		Owner: repoOpt.Owner,
 		Repo:  repoOpt.Repo,
-		Base:  base,
+		Base:  tempRef,
 		SHA:   opt.SHA,
 	})
 	if err != nil {
@@ -176,6 +177,7 @@ type MergeOption struct {
 }
 
 func (c *PickService) Merge(ctx context.Context, opt *MergeOption) (*string, error) {
+	logrus.Infof("merge new commit %s to temp branch %s", opt.SHA, opt.Base)
 	mergeCommit, mergeResp, err := c.client.Repositories.Merge(ctx, opt.Owner, opt.Repo, &gh.RepositoryMergeRequest{
 		Base:          gh.String(opt.Base),
 		Head:          gh.String(opt.SHA),

@@ -2,6 +2,7 @@ package pick
 
 import (
 	"context"
+	"errors"
 	"github.com/kentio/norn/internal"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -112,6 +113,11 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 		})
 		if err != nil {
 			state = FailedState
+			// format error message, 如果能够通过空格分割 1 次，取后面的部分
+			message := strings.Split(err.Error(), " ")
+			if len(message) > 1 {
+				err = errors.New(strings.Join(message[1:], " "))
+			}
 			result = append(result, &TaskResult{State: state, Branch: branch, Reason: err.Error()})
 		} else {
 			state = SucceedState
