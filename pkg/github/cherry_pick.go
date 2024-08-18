@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type PickService struct {
@@ -124,12 +125,18 @@ func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption)
 	if err != nil {
 		return err
 	}
+	// update commit date
+	_committer := sourceCommit.Committer
+	// to time Timestamp
+	_committer.Date = &gh.Timestamp{
+		Time: time.Now(),
+	}
 
 	// create the final pick commit
 	message := fmt.Sprintf("%s\n\n(cherry picked from commit %s)", *sourceCommit.Message, sourceCommit.GetSHA()[:7])
 	newCommit, _, err := c.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Commit{
 		Author:    sourceCommit.Author,
-		Committer: sourceCommit.Committer,
+		Committer: _committer,
 		Message:   gh.String(message),
 		Tree:      &gh.Tree{SHA: mergeSha, Truncated: gh.Bool(false)},
 		Parents:   []*gh.Commit{{SHA: latestCommit.SHA}},

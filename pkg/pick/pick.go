@@ -8,7 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Service struct {
@@ -103,8 +102,6 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 		}
 
 		logrus.Debugf("Picking %s to %s", *task.SHA, branch)
-		// 等待 0.8s
-		time.Sleep(800 * time.Millisecond)
 		// PerformPick commits
 		pr, _ := strconv.Atoi(task.MergeRequestID)
 		err = s.PerformPick(ctx, &CherryPickOptions{
