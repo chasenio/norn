@@ -183,3 +183,12 @@ func Test_CreateTree(t *testing.T) {
 	}
 	t.Logf("tree: %v", tree)
 }
+
+func Test_PickErrMessage(t *testing.T) {
+	err := errors.New("https://api.github.com/repos/xxx/xxx/merges: 404 Base does not exist []")
+	message := strings.Split(err.Error(), " ")
+	if len(message) > 1 {
+		err = errors.New(strings.Join(message[1:], " "))
+	}
+	logrus.Infof("err: %v", err)
+}

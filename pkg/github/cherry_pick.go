@@ -67,7 +67,7 @@ func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption)
 	}
 
 	// create a temporary ref
-	tempRef := fmt.Sprintf("refs/heads/pick-%s-%s", opt.Branch, opt.SHA)
+	tempRef := fmt.Sprintf("refs/heads/pick-%s-%s", opt.Branch, opt.SHA[:9])
 	// Delete the temporary ref
 	defer func() {
 		_, err := c.client.Git.DeleteRef(ctx, repoOpt.Owner, repoOpt.Repo, tempRef)
@@ -113,9 +113,7 @@ func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption)
 		logrus.Errorf("Failed to update temp ref %s", tempRef)
 		return err
 	}
-	// merge pick commit to temp branch
-	base := strings.Split(tempRef, "/")[2]
-	logrus.Warnf("temp ref: %s base: %s", tempRef, base)
+
 	// merge pick commit to temp branch
 	mergeSha, err := c.Merge(ctx, &MergeOption{
 		Owner: repoOpt.Owner,

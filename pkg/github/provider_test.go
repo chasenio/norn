@@ -1,12 +1,12 @@
 package github
 
 import (
+	"github.com/kentio/norn/pkg/types"
 	"testing"
 )
 
 func TestNewProvider(t *testing.T) {
-	token := ""
-	provider := NewProvider(nil, token)
+	provider := NewProvider(nil, &types.CreateProviderOption{Token: ""})
 
 	t.Logf("provider: %v", provider)
 }
