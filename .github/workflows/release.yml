@@ -53,6 +53,6 @@ jobs:
           files: bin/*
           draft: false
           prerelease: false
-          name: Release ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           append_body: true
