@@ -118,6 +118,28 @@ func (s *CommentService) Update(ctx context.Context, opt *tp.UpdateCommentOption
 	return newIssueComment(comment), nil
 }
 
+// Delete Comment deletes a comment on the given merge request.
+func (s *CommentService) Delete(ctx context.Context, opt *tp.DeleteCommentOption) error {
+	if opt == nil {
+		return tp.ErrInvalidOptions
+	}
+	repoOpt, err := parseRepo(opt.Repo)
+
+	_commentID, err := strconv.Atoi(opt.CommentID)
+	commentID := int64(_commentID)
+	if err != nil {
+		logrus.Errorf("failed to convert comment id to int: %v", err)
+		return err
+	}
+	response, err := s.client.Issues.DeleteComment(ctx, repoOpt.Owner, repoOpt.Repo, commentID)
+	if err != nil {
+		logrus.Warnf("Failed to delete comment: %v", err)
+		return err
+	}
+	logrus.Debugf("Delete Comment %s Response: %d", opt.CommentID, response.StatusCode)
+	return nil
+}
+
 func newIssueComment(comment *gh.IssueComment) *Comment {
 	return &Comment{
 		commentId: strconv.FormatInt(comment.GetID(), 10),

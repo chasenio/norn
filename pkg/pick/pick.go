@@ -176,7 +176,8 @@ func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error {
 	targets := generateTargetBranches(task)
 	logrus.Debugf("Summary branches: %+v", targets)
 	if len(targets) == 0 {
-		logrus.Infof("No summary branches, exit")
+		logrus.Infof("No cherry-pick branches, skip")
+		s.DeleteSummaryWithFlag(ctx, task)
 		return nil
 	}
 
@@ -284,4 +285,25 @@ func FindSummaryWithFlag(comments []tp.Comment, flag string) tp.Comment {
 		}
 	}
 	return nil
+}
+
+// DeleteSummaryWithFlag delete summary comment
+// - find summary comment with flag
+// - delete summary comment
+func (s *Service) DeleteSummaryWithFlag(ctx context.Context, task *Task) {
+	comments, err := s.provider.Comment().Find(ctx, &tp.FindCommentOption{MergeRequestID: task.MergeRequestID, Repo: task.Repo})
+	if err != nil {
+		logrus.Warnf("Get merge request comments failed: %s", err)
+		return
+	}
+	comment := FindSummaryWithFlag(comments, tp.CherryPickSummaryFlag)
+	if comment != nil {
+		err = s.provider.Comment().Delete(ctx, &tp.DeleteCommentOption{
+			CommentID: comment.CommentID(),
+			Repo:      task.Repo,
+		})
+		if err != nil {
+			logrus.Warnf("Delete summary comment failed: %s", err)
+		}
+	}
 }

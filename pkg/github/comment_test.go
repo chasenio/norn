@@ -49,3 +49,21 @@ branches:
 	}
 	t.Logf("add comment success")
 }
+
+func TestCommentService_Delete(t *testing.T) {
+	logrus.SetLevel(logrus.DebugLevel)
+	ctx := context.Background()
+	token := ""
+	client := NewGithubClient(ctx, token)
+
+	commentService := NewCommentService(client)
+
+	err := commentService.Delete(ctx, &tp.DeleteCommentOption{
+		CommentID: "2449993187",
+		Repo:      "",
+	})
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	t.Logf("delete comment success")
+}

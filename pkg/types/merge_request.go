@@ -34,3 +34,9 @@ type UpdateCommentOption struct {
 	Body           string
 	MergeRequestID string
 }
+
+type DeleteCommentOption struct {
+	// CommentID is the ID of the comment to delete.
+	CommentID string
+	Repo      string
+}
