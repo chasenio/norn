@@ -113,10 +113,14 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 		})
 		if err != nil {
 			state = FailedState
-			// format error message, 如果能够通过空格分割 1 次，取后面的部分
-			message := strings.Split(err.Error(), " ")
-			if len(message) > 1 {
-				err = errors.New(strings.Join(message[1:], " "))
+			var e *tp.ProviderError
+			if !errors.As(err, &e) { // 如果不是 ProviderError 需要对信息做处理
+				// format error message, 如果能够通过空格分割 1 次，取后面的部分
+				message := strings.Split(err.Error(), " ")
+				if len(message) > 1 {
+					logrus.Warnf("source error: %s", err)
+					err = errors.New(strings.Join(message[1:], " "))
+				}
 			}
 			result = append(result, &TaskResult{State: state, Branch: branch, Reason: err.Error()})
 		} else {
@@ -156,7 +160,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 func (s *Service) PerformPick(ctx context.Context, opt *CherryPickOptions) error {
 	if s.provider == nil || opt == nil {
 		logrus.Error("provider or opt is nil")
-		return ErrInvalidOptions
+		return tp.ErrInvalidOptions
 	}
 
 	err := s.provider.Pick().Pick(ctx, opt.Repo, &tp.PickOption{

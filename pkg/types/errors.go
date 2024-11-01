@@ -1,12 +1,24 @@
 package types
 
-import "errors"
+type ProviderError struct {
+	Message string
+}
+
+func (e *ProviderError) Error() string {
+	return e.Message
+}
+
+func NewProviderError(message string) *ProviderError {
+	return &ProviderError{
+		Message: message,
+	}
+}
 
 var (
-	ErrInvalidOptions = errors.New("invalid parameter, please check your request")
-	ErrConflict       = errors.New("conflict")
+	ErrInvalidOptions = NewProviderError("invalid parameter")
+	ErrConflict       = NewProviderError("conflict")
 
-	NotFound = errors.New("not found")
+	NotFound = NewProviderError("not found")
 
-	ErrUnknownProvider = errors.New("unknown provider")
+	ErrUnknownProvider = NewProviderError("unknown provider")
 )
