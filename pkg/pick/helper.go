@@ -83,9 +83,9 @@ func NewResultComment(layout string, result []*TaskResult) (string, error) {
 		Message string `json:"message"`
 	}
 	table := tablewriter.NewWriter(&resultContent)
-	table.SetHeader([]string{"Branch", "State", "Reason"})
+	table.SetHeader([]string{"Branch", "Status", "Reason"})
 	for _, i := range result {
-		s := fmt.Sprintf("%s %s", getStateEmoji(i.State), i.State)
+		s := fmt.Sprintf("%s %s", getStateEmoji(i.Status), i.Status)
 		table.Append([]string{i.Branch, s, i.Reason})
 	}
 	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
@@ -127,14 +127,16 @@ func NewSummaryComment(layout string, branches []string) (string, error) {
 }
 
 // getStateEmoji returns the emoji for the state
-func getStateEmoji(state State) string {
+func getStateEmoji(state Status) string {
 	switch state {
-	case SucceedState:
+	case SucceedStatus:
 		return "✅"
-	case FailedState:
+	case FailedStatus:
 		return "❌"
-	case PendingState:
+	case PendingStatus:
 		return "⏳"
+	case SkipStatus:
+		return "⏭️"
 	default:
 		return "❓"
 	}

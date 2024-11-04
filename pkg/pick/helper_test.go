@@ -21,12 +21,12 @@ func TestEqualSlice(t *testing.T) {
 func TestNewResultComment(t *testing.T) {
 	result := []*TaskResult{
 		&TaskResult{
-			State:  SucceedState,
+			Status: SucceedStatus,
 			Branch: "branch1",
 			Reason: "",
 		},
 		&TaskResult{
-			State:  SucceedState,
+			Status: SucceedStatus,
 			Branch: "branch2",
 			Reason: "adsfasdf",
 		},

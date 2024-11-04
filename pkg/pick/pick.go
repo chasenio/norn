@@ -40,16 +40,17 @@ type Task struct {
 	RepoPath       string
 }
 
-type State string
+type Status string
 
 const (
-	SucceedState = "Succeed"
-	FailedState  = "Failed"
-	PendingState = "Pending"
+	SucceedStatus = "Succeed"
+	FailedStatus  = "Failed"
+	PendingStatus = "Pending"
+	SkipStatus    = "Skip"
 )
 
 type TaskResult struct {
-	State  State
+	Status Status
 	Branch string
 	Reason string
 }
@@ -89,7 +90,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 
 	// PerformPick commits from one branch to another
 	for _, branch := range selected {
-		var state State
+		var status Status
 		if branch == task.From {
 			logrus.Debugf("Skip form branch: %s", branch)
 			continue // skip the branch, and pick commits from the next branch
@@ -112,7 +113,10 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 			Pr:       pr,
 		})
 		if err != nil {
-			state = FailedState
+			status = FailedStatus
+			if errors.Is(err, tp.NotFound) {
+				status = SkipStatus
+			}
 			var e *tp.ProviderError
 			if !errors.As(err, &e) { // 如果不是 ProviderError 需要对信息做处理
 				// format error message, 如果能够通过空格分割 1 次，取后面的部分
@@ -122,12 +126,12 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 					err = errors.New(strings.Join(message[1:], " "))
 				}
 			}
-			result = append(result, &TaskResult{State: state, Branch: branch, Reason: err.Error()})
+			result = append(result, &TaskResult{Status: status, Branch: branch, Reason: err.Error()})
 		} else {
-			state = SucceedState
-			result = append(result, &TaskResult{State: state, Branch: branch})
+			status = SucceedStatus
+			result = append(result, &TaskResult{Status: status, Branch: branch})
 		}
-		logrus.Infof("Pick %s to %s %s", *task.SHA, branch, state)
+		logrus.Infof("Pick %s to %s %s", *task.SHA, branch, status)
 	}
 	logrus.Infof("Picke Result %v", result)
 
