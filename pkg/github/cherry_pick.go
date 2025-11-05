@@ -40,6 +40,10 @@ func parseRepo(repo string) (*RepoOption, error) {
 }
 
 func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption) error {
+	prefix := "cherry-pick"
+	if opt.Prefix != "" && &opt.Prefix != nil {
+		prefix = opt.Prefix
+	}
 	repoOpt, err := parseRepo(repo)
 	if err != nil {
 		return err
@@ -68,7 +72,7 @@ func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption)
 	}
 
 	// create a temporary ref
-	tempRef := fmt.Sprintf("refs/heads/pick-%s-%s", opt.Branch, opt.SHA[:9])
+	tempRef := fmt.Sprintf("refs/heads/%s/%s/%s", prefix, opt.SHA[:9], opt.Branch)
 	// Delete the temporary ref
 	defer func() {
 		_, err := c.client.Git.DeleteRef(ctx, repoOpt.Owner, repoOpt.Repo, tempRef)

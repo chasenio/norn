@@ -5,6 +5,7 @@ import "context"
 type PickOption struct {
 	SHA    string
 	Branch string
+	Prefix string
 }
 
 type PickService interface {

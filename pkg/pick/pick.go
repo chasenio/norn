@@ -6,7 +6,6 @@ import (
 	"github.com/kentio/norn/internal"
 	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
-	"strconv"
 	"strings"
 )
 
@@ -38,6 +37,7 @@ type Task struct {
 	IsSummary      bool // generate summary comment
 	PickMode       Mode
 	RepoPath       string
+	BranchPrefix   string // branch prefix for temp branch
 }
 
 type Status string
@@ -103,16 +103,14 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 		}
 
 		logrus.Debugf("Picking %s to %s", *task.SHA, branch)
-		// PerformPick commits
-		pr, _ := strconv.Atoi(task.MergeRequestID)
-		err = s.PerformPick(ctx, &CherryPickOptions{
-			SHA:      *task.SHA,
-			Repo:     task.Repo,
-			Target:   branch,
-			RepoPath: task.RepoPath,
-			Pr:       pr,
+		// cherry-pick commit
+		err := s.provider.Pick().Pick(ctx, task.Repo, &tp.PickOption{
+			Branch: branch,
+			SHA:    *task.SHA,
+			Prefix: task.BranchPrefix,
 		})
 		if err != nil {
+			logrus.Warnf("Cherry-pick %s to %s failed: %s", *task.SHA, branch, err)
 			status = FailedStatus
 			if errors.Is(err, tp.NotFound) {
 				status = SkipStatus
