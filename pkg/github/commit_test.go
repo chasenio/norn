@@ -2,8 +2,8 @@ package github
 
 import (
 	"context"
+	"github.com/chasenio/norn/pkg/types"
 	"github.com/google/go-github/v62/github"
-	"github.com/kentio/norn/pkg/types"
 	"golang.org/x/oauth2"
 	"testing"
 )

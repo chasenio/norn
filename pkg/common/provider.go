@@ -2,8 +2,8 @@ package common
 
 import (
 	"context"
-	"github.com/kentio/norn/pkg/github"
-	tp "github.com/kentio/norn/pkg/types"
+	"github.com/chasenio/norn/pkg/github"
+	tp "github.com/chasenio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 

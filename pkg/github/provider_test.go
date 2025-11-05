@@ -1,7 +1,7 @@
 package github
 
 import (
-	"github.com/kentio/norn/pkg/types"
+	"github.com/chasenio/norn/pkg/types"
 	"testing"
 )
 

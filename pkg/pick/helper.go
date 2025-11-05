@@ -3,7 +3,7 @@ package pick
 import (
 	"crypto/md5"
 	"fmt"
-	tp "github.com/kentio/norn/pkg/types"
+	tp "github.com/chasenio/norn/pkg/types"
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
 	"strings"

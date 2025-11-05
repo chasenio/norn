@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/kentio/norn/cmd/pick"
-	"github.com/kentio/norn/pkg/logger"
+	"github.com/chasenio/norn/cmd/pick"
+	"github.com/chasenio/norn/pkg/logger"
 	"os"
 )
 

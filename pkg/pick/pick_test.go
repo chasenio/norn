@@ -2,11 +2,13 @@ package pick
 
 import (
 	"context"
-	"github.com/kentio/norn/internal"
-	"github.com/kentio/norn/pkg/common"
-	"github.com/kentio/norn/pkg/github"
-	tp "github.com/kentio/norn/pkg/types"
+	"errors"
+	"github.com/chasenio/norn/internal"
+	"github.com/chasenio/norn/pkg/common"
+	"github.com/chasenio/norn/pkg/github"
+	tp "github.com/chasenio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
+	"strings"
 	"testing"
 )
 

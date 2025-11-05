@@ -3,8 +3,8 @@ package github
 import (
 	"context"
 	"errors"
+	tp "github.com/chasenio/norn/pkg/types"
 	gh "github.com/google/go-github/v62/github"
-	tp "github.com/kentio/norn/pkg/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"os"

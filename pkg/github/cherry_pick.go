@@ -3,9 +3,9 @@ package github
 import (
 	"context"
 	"fmt"
+	"github.com/chasenio/norn/pkg/types"
+	tp "github.com/chasenio/norn/pkg/types"
 	gh "github.com/google/go-github/v62/github"
-	"github.com/kentio/norn/pkg/types"
-	tp "github.com/kentio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"

@@ -3,8 +3,8 @@ package pick
 import (
 	"context"
 	"errors"
-	"github.com/kentio/norn/internal"
-	tp "github.com/kentio/norn/pkg/types"
+	"github.com/chasenio/norn/internal"
+	tp "github.com/chasenio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"strings"
 )
