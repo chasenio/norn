@@ -8,7 +8,7 @@ const (
 		"{{ .Message }}\n\n" +
 		CherryPickSummaryFlag
 	PickResultTemplate = "" +
-		"Pick Result: \n" +
+		"Result: \n" +
 		"{{ .Message }}\n\n" +
 		CherryPickResultFlag
 )
