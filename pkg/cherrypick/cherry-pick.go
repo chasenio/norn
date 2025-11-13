@@ -153,7 +153,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, selecte
 		}
 		logrus.Infof("cherry-pick %s to %s %s", *task.SHA, branch, status)
 	}
-	logrus.Infof("Picke Result %v", result)
+	logrus.Infof("Pick Result %v", result)
 
 	if len(result) == 0 {
 		logrus.Warnf("No branch to pick")
