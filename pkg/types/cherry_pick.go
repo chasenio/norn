@@ -8,6 +8,6 @@ type Option struct {
 	Prefix string
 }
 
-type CherryPickService interface {
+type CherryService interface {
 	CherryPick(ctx context.Context, repo string, opt *Option) error
 }
