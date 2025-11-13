@@ -34,7 +34,7 @@ task := &cherrypick.Task{
 }
 
 // Process the cherry-pick
-err := service.ProcessPick(context.Background(), task)
+err := service.CherryPick(context.Background(), task, nil)
 ```
 
 ### Using Custom Templates
