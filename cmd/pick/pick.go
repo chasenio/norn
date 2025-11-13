@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/chasenio/norn/internal"
-	"github.com/chasenio/norn/pkg/common"
 	"github.com/chasenio/norn/pkg/cherrypick"
+	"github.com/chasenio/norn/pkg/common"
 	tp "github.com/chasenio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -100,16 +100,6 @@ func NewPickCommand() *cli.Command {
 				Usage: "RepoPath to the git repo",
 				Value: ".",
 			},
-			&cli.StringFlag{
-				Name:  "summary-template",
-				Usage: "Custom template for cherry-pick summary comment",
-				Value: "",
-			},
-			&cli.StringFlag{
-				Name:  "result-template",
-				Usage: "Custom template for cherry-pick result comment",
-				Value: "",
-			},
 		},
 		Action: func(c *cli.Context) error {
 			logrus.Debugf("Start picking commits")
@@ -141,10 +131,7 @@ func NewPickCommand() *cli.Command {
 			sha, isSummary := c.String("sha"), c.Bool("is-summary")
 			logrus.Debugf("SHA: %s, IsSummary: %t", sha, isSummary)
 
-			summaryTemplate := c.String("summary-template")
-			resultTemplate := c.String("result-template")
-			
-			p := cherrypick.NewPickService(provider, summaryTemplate, resultTemplate)
+			p := cherrypick.NewService(provider)
 
 			pickOpt := &cherrypick.Task{
 				Repo:           repo,

@@ -27,7 +27,7 @@ func TestPick_CreateSummaryWithTask(t *testing.T) {
 		SHA:            common.String(""),
 		MergeRequestID: "64",
 	}
-	pick := NewPickService(provider, "", "")
+	pick := NewService(provider)
 	err := pick.CreateSummaryWithTask(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -50,7 +50,7 @@ func TestPick(t *testing.T) {
 		SHA:            common.String(""),
 		MergeRequestID: "2",
 	}
-	pick := NewPickService(provider, "", "")
+	pick := NewService(provider)
 
 	//err := pick.ProcessPick(ctx, task)
 	err := pick.PerformPick(ctx, &CherryPickOptions{
@@ -82,7 +82,7 @@ func TestPick_CheckSummaryExist(t *testing.T) {
 		SHA:            common.String(""),
 		MergeRequestID: "54",
 	}
-	pick := NewPickService(provider, "", "")
+	pick := NewService(provider)
 	// Is Exist
 	comment, err := pick.CheckSummaryExist(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
@@ -148,7 +148,7 @@ func TestPerformPickToBranches(t *testing.T) {
 		SHA:            common.String(""),
 		MergeRequestID: "66",
 	}
-	pick := NewPickService(provider, "", "")
+	pick := NewService(provider)
 
 	_, comment, err := pick.FindCommentWithTask(ctx, pickOpt, tp.CherryPickSummaryFlag)
 

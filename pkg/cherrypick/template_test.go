@@ -110,9 +110,9 @@ func TestDefaultTemplatesStillWork(t *testing.T) {
 	// This is tested indirectly through Service creation
 	// but we can test the helper functions directly
 	
-	// Note: In actual usage, NewPickService handles the default template logic
+	// Note: In actual usage, NewService handles the default template logic
 	// These helper functions expect actual template strings
-	t.Log("Default template handling is done by NewPickService constructor")
+	t.Log("Default template handling is done by NewService constructor")
 }
 
 // Helper function to check if string contains substring

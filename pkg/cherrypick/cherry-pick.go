@@ -12,9 +12,8 @@ import (
 // Service provides cherry-pick operations with configurable templates.
 // It manages the creation of summary and result comments for cherry-pick tasks.
 type Service struct {
-	provider        tp.Provider
-	summaryTemplate string // Template for generating cherry-pick summary comments
-	resultTemplate  string // Template for generating cherry-pick result comments
+	provider  tp.Provider
+	templates *Templates
 }
 
 type CherryPickOptions struct {
@@ -59,29 +58,36 @@ type TaskResult struct {
 	Reason string
 }
 
-// NewPickService creates a new cherry-pick service with the given provider and templates.
-// If templates are empty strings, default templates from types.CherryPickTaskSummaryTemplate 
-// and types.PickResultTemplate will be used.
+// NewService creates a new cherry-pick service with the given provider.
+// It uses default templates. Use NewServiceWithTemplates for custom templates.
 //
 // Parameters:
 //   - provider: The git provider implementation (e.g., GitHub, GitLab)
-//   - summaryTemplate: Custom template for cherry-pick summary comments (optional)
-//   - resultTemplate: Custom template for cherry-pick result comments (optional)
+//
+// Returns:
+//   - *Service: A configured cherry-pick service instance with default templates
+func NewService(provider tp.Provider) *Service {
+	return &Service{
+		provider:  provider,
+		templates: DefaultTemplates(),
+	}
+}
+
+// NewServiceWithTemplates creates a new cherry-pick service with custom templates.
+//
+// Parameters:
+//   - provider: The git provider implementation (e.g., GitHub, GitLab)
+//   - templates: Custom template configuration
 //
 // Returns:
 //   - *Service: A configured cherry-pick service instance
-func NewPickService(provider tp.Provider, summaryTemplate, resultTemplate string) *Service {
-	// Use default templates if not provided
-	if summaryTemplate == "" {
-		summaryTemplate = tp.CherryPickTaskSummaryTemplate
-	}
-	if resultTemplate == "" {
-		resultTemplate = tp.PickResultTemplate
+func NewServiceWithTemplates(provider tp.Provider, templates *Templates) *Service {
+	if templates == nil {
+		templates = DefaultTemplates()
 	}
 	return &Service{
-		provider:        provider,
-		summaryTemplate: summaryTemplate,
-		resultTemplate:  resultTemplate,
+		provider:  provider,
+		templates: templates,
 	}
 }
 
@@ -166,7 +172,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 
 	// generate content
 	logrus.Infof("Generate pick result content")
-	content, err := NewResultComment(s.resultTemplate, result)
+	content, err := NewResultComment(s.templates.ResultTemplate, result)
 	if err != nil {
 		logrus.Errorf("Generate pick result content failed: %s", err)
 		return nil, err
@@ -214,7 +220,7 @@ func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error {
 	}
 
 	// generate comment body
-	summaryComment, err := NewSummaryComment(s.summaryTemplate, targets)
+	summaryComment, err := NewSummaryComment(s.templates.SummaryTemplate, targets)
 	if err != nil {
 		logrus.Errorf("NewSummaryComment failed: %+v", err)
 		return err

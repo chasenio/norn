@@ -21,7 +21,7 @@ import (
 )
 
 // Create a service with default templates
-service := cherrypick.NewPickService(provider, "", "")
+service := cherrypick.NewService(provider)
 
 // Create a cherry-pick task
 task := &cherrypick.Task{
@@ -42,32 +42,36 @@ err := service.ProcessPick(context.Background(), task)
 You can provide custom Go templates for both summary and result comments. Templates must include a `{{ .Message }}` placeholder.
 
 ```go
-// Custom summary template
-summaryTemplate := `
+// Create custom templates
+templates := &cherrypick.Templates{
+    SummaryTemplate: `
 🍒 Cherry-pick Request
 Please select branches to cherry-pick to:
 
 {{ .Message }}
 
 <!-- cherry-pick-summary -->
-`
-
-// Custom result template  
-resultTemplate := `
+`,
+    ResultTemplate: `
 🎉 Cherry-pick Results
 
 {{ .Message }}
 
 <!-- cherry-pick-result -->
-`
+`,
+}
 
 // Create service with custom templates
-service := cherrypick.NewPickService(provider, summaryTemplate, resultTemplate)
+service := cherrypick.NewServiceWithTemplates(provider, templates)
+
+// Or use the helper to create templates with defaults fallback
+templates := cherrypick.NewTemplates(summaryTemplate, resultTemplate)
+service := cherrypick.NewServiceWithTemplates(provider, templates)
 ```
 
 ### CLI Usage
 
-The cherry-pick functionality is also available via CLI with support for custom templates:
+The cherry-pick functionality is available via CLI:
 
 ```bash
 norn pick \
@@ -76,10 +80,10 @@ norn pick \
   --sha COMMIT_SHA \
   --for main \
   --merge-request-id 123 \
-  --is-summary \
-  --summary-template "Custom summary: {{ .Message }}" \
-  --result-template "Custom result: {{ .Message }}"
+  --is-summary
 ```
+
+Note: Template customization is available through the Go API only.
 
 ## Template Variables
 
@@ -110,18 +114,31 @@ Result:
 
 ## API Reference
 
-### NewPickService
+### NewService
 
 ```go
-func NewPickService(provider types.Provider, summaryTemplate, resultTemplate string) *Service
+func NewService(provider types.Provider) *Service
 ```
 
-Creates a new cherry-pick service with the given provider and templates.
+Creates a new cherry-pick service with the given provider using default templates.
 
 **Parameters:**
 - `provider`: The git provider implementation (e.g., GitHub, GitLab)
-- `summaryTemplate`: Custom template for cherry-pick summary comments (empty string uses default)
-- `resultTemplate`: Custom template for cherry-pick result comments (empty string uses default)
+
+**Returns:**
+- `*Service`: A configured cherry-pick service instance with default templates
+
+### NewServiceWithTemplates
+
+```go
+func NewServiceWithTemplates(provider types.Provider, templates *Templates) *Service
+```
+
+Creates a new cherry-pick service with custom templates.
+
+**Parameters:**
+- `provider`: The git provider implementation (e.g., GitHub, GitLab)
+- `templates`: Custom template configuration (uses defaults if nil)
 
 **Returns:**
 - `*Service`: A configured cherry-pick service instance
