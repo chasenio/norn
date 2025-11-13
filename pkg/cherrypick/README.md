@@ -178,7 +178,7 @@ type Task struct {
     SHA            *string  // Commit SHA to cherry-pick
     MergeRequestID string   // Pull request or merge request ID
     IsSummary      bool     // Generate summary comment instead of performing pick
-    PickMode       Mode     // Pick mode (MergeRequest or CheeryPick)
+    PickMode       Mode     // Pick mode (MergeRequest or CherryPick)
     RepoPath       string   // Local repository path
     BranchPrefix   string   // Prefix for temporary branches
 }
