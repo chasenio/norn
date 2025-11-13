@@ -28,7 +28,7 @@ func TestPick_CreateSummaryWithTask(t *testing.T) {
 		MergeRequestID: "64",
 	}
 	pick := NewService(provider)
-	err := pick.CreateSummaryWithTask(ctx, pickOpt)
+	err := pick.CreateSummary(ctx, pickOpt, nil)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -52,55 +52,12 @@ func TestPick(t *testing.T) {
 	}
 	pick := NewService(provider)
 
-	//err := pick.ProcessPick(ctx, task)
-	err := pick.PerformPick(ctx, &CherryPickOptions{
-		SHA:    *task.SHA,
-		Repo:   task.Repo,
-		Target: "master",
-		Pr:     64,
-	})
+	err := pick.CherryPick(ctx, task, nil)
 
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
 	t.Logf("err: %v", err)
-}
-
-func TestPick_CheckSummaryExist(t *testing.T) {
-	logrus.SetLevel(logrus.DebugLevel)
-	ctx := context.Background()
-	provider := github.NewProvider(ctx, &tp.CreateProviderOption{Token: ""})
-	pickOpt := &Task{
-		Repo: "kentio/test_cherry_pick",
-		Branches: []string{
-			"release/23.03",
-			"release/23.04",
-			"master",
-		},
-		From:           "release/23.03",
-		IsSummary:      false,
-		SHA:            common.String(""),
-		MergeRequestID: "54",
-	}
-	pick := NewService(provider)
-	// Is Exist
-	comment, err := pick.CheckSummaryExist(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	if comment == nil {
-		t.Fatalf("err: %v", err)
-	}
-
-	pickOpt.MergeRequestID = "45"
-	// Is Not Exist
-	comment, err = pick.CheckSummaryExist(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	if comment != nil {
-		t.Fatalf("err: %v", err)
-	}
 }
 
 func TestParseSelectedBranches(t *testing.T) {
@@ -135,7 +92,7 @@ func TestPerformPickToBranches(t *testing.T) {
 	ctx := context.Background()
 	token := ""
 	provider, _ := common.NewProvider(ctx, "github", &tp.CreateProviderOption{Token: token})
-
+	templates := DefaultTemplates()
 	pickOpt := &Task{
 		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
@@ -150,10 +107,17 @@ func TestPerformPickToBranches(t *testing.T) {
 	}
 	pick := NewService(provider)
 
-	_, comment, err := pick.FindCommentWithTask(ctx, pickOpt, tp.CherryPickSummaryFlag)
+	_, comment, err := pick.FindCommentWithTask(ctx, pickOpt, templates.Summary.UniqueID)
+
+	// get selected branches
+	selected := parseSelectedBranches(comment.Body())
+
+	if len(selected) == 0 {
+		logrus.Warnf("no selected branches")
+	}
 
 	// test is summary task
-	result, err := pick.PerformPickToBranches(ctx, pickOpt, comment)
+	result, err := pick.PerformPickToBranches(ctx, pickOpt, selected, templates.CherryPickResult)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
