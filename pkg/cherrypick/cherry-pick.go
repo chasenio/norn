@@ -94,7 +94,7 @@ func (s *Service) GetSelected(ctx context.Context, task *Task, template *Message
 
 	comment := FindSummaryWithFlag(comments, template.UniqueID)
 	if comment == nil {
-		logrus.Warnf("not found pick summary [%s]", comment)
+		logrus.Warnf("not found pick summary for unique ID [%s]", template.UniqueID)
 		return nil, nil
 	}
 
