@@ -9,10 +9,12 @@ import (
 	"strings"
 )
 
+// Service provides cherry-pick operations with configurable templates.
+// It manages the creation of summary and result comments for cherry-pick tasks.
 type Service struct {
-	provider               tp.Provider
-	summaryTemplate        string
-	resultTemplate         string
+	provider        tp.Provider
+	summaryTemplate string // Template for generating cherry-pick summary comments
+	resultTemplate  string // Template for generating cherry-pick result comments
 }
 
 type CherryPickOptions struct {
@@ -57,6 +59,17 @@ type TaskResult struct {
 	Reason string
 }
 
+// NewPickService creates a new cherry-pick service with the given provider and templates.
+// If templates are empty strings, default templates from types.CherryPickTaskSummaryTemplate 
+// and types.PickResultTemplate will be used.
+//
+// Parameters:
+//   - provider: The git provider implementation (e.g., GitHub, GitLab)
+//   - summaryTemplate: Custom template for cherry-pick summary comments (optional)
+//   - resultTemplate: Custom template for cherry-pick result comments (optional)
+//
+// Returns:
+//   - *Service: A configured cherry-pick service instance
 func NewPickService(provider tp.Provider, summaryTemplate, resultTemplate string) *Service {
 	// Use default templates if not provided
 	if summaryTemplate == "" {

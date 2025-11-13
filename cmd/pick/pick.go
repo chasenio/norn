@@ -100,6 +100,16 @@ func NewPickCommand() *cli.Command {
 				Usage: "RepoPath to the git repo",
 				Value: ".",
 			},
+			&cli.StringFlag{
+				Name:  "summary-template",
+				Usage: "Custom template for cherry-pick summary comment",
+				Value: "",
+			},
+			&cli.StringFlag{
+				Name:  "result-template",
+				Usage: "Custom template for cherry-pick result comment",
+				Value: "",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			logrus.Debugf("Start picking commits")
@@ -131,7 +141,10 @@ func NewPickCommand() *cli.Command {
 			sha, isSummary := c.String("sha"), c.Bool("is-summary")
 			logrus.Debugf("SHA: %s, IsSummary: %t", sha, isSummary)
 
-			p := cherrypick.NewPickService(provider, "", "")
+			summaryTemplate := c.String("summary-template")
+			resultTemplate := c.String("result-template")
+			
+			p := cherrypick.NewPickService(provider, summaryTemplate, resultTemplate)
 
 			pickOpt := &cherrypick.Task{
 				Repo:           repo,
