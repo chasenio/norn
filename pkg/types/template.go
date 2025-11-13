@@ -7,7 +7,7 @@ const (
 		"Will be cherry-picked to the following branches:\n\n" +
 		"{{ .Message }}\n\n" +
 		CherryPickSummaryFlag
-	PickResultTemplate = "" +
+	CherryPickResultTemplate = "" +
 		"Result: \n" +
 		"{{ .Message }}\n\n" +
 		CherryPickResultFlag
