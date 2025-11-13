@@ -143,7 +143,7 @@ func NewPickCommand() *cli.Command {
 				RepoPath:       c.String("repo-path"),
 			}
 
-			err = p.ProcessPick(ctx, pickOpt)
+			err = p.CherryPick(ctx, pickOpt, nil)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
