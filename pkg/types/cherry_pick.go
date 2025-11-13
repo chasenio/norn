@@ -2,12 +2,12 @@ package types
 
 import "context"
 
-type PickOption struct {
+type Option struct {
 	SHA    string
 	Branch string
 	Prefix string
 }
 
-type PickService interface {
-	Pick(ctx context.Context, repo string, opt *PickOption) error
+type Service interface {
+	CherryPick(ctx context.Context, repo string, opt *Option) error
 }
