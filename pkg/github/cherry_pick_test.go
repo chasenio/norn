@@ -9,12 +9,13 @@ import (
 func TestPickClient_Pick(t *testing.T) {
 	ctx := context.Background()
 	SHA := ""
-	Branch := ""
+	Branch := "master"
 	token := ""
+
 	client := NewGithubClient(ctx, token)
-	pickServuce := NewPickService(client)
-	err := pickServuce.Pick(ctx, "",
-		&tp.PickOption{SHA: SHA, Branch: Branch})
+	pickServuce := NewCherryPickService(client)
+	err := pickServuce.CherryPick(ctx, "chasenio/pick",
+		&tp.Option{SHA: SHA, Branch: Branch, Prefix: "cherry-kit"})
 	if err != nil {
 		t.Errorf("err: %v", err)
 	} else {

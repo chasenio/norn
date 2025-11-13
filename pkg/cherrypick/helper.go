@@ -1,4 +1,4 @@
-package pick
+package cherrypick
 
 import (
 	"crypto/md5"
@@ -75,8 +75,17 @@ func GetCheckConflictMode(provider tp.ProviderType) tp.CheckConflictMode {
 	}
 }
 
-// NewResultComment generate comment content
-func NewResultComment(layout string, result []*TaskResult) (string, error) {
+// NewResultComment generates a formatted comment with cherry-pick results.
+// The template should contain a {{ .Message }} placeholder for the result table.
+//
+// Parameters:
+//   - templateStr: Go template string with {{ .Message }} placeholder
+//   - result: Slice of TaskResult containing cherry-pick outcomes
+//
+// Returns:
+//   - string: Formatted comment content
+//   - error: Template execution error if any
+func NewResultComment(templateStr string, result []*TaskResult) (string, error) {
 	var resultContent strings.Builder
 	var content strings.Builder
 	type Msg struct {
@@ -92,7 +101,7 @@ func NewResultComment(layout string, result []*TaskResult) (string, error) {
 	table.SetCenterSeparator("|")
 	table.Render()
 
-	tpl := template.Must(template.New("message").Parse(layout))
+	tpl := template.Must(template.New("message").Parse(templateStr))
 	data := Msg{
 		Message: resultContent.String(),
 	}
@@ -104,8 +113,17 @@ func NewResultComment(layout string, result []*TaskResult) (string, error) {
 	return content.String(), nil
 }
 
-// NewSummaryComment NewSelectComment generate comment content
-func NewSummaryComment(layout string, branches []string) (string, error) {
+// NewSummaryComment generates a formatted summary comment with selectable branches.
+// The template should contain a {{ .Message }} placeholder for the branch list.
+//
+// Parameters:
+//   - templateStr: Go template string with {{ .Message }} placeholder
+//   - branches: List of branch names to cherry-pick to
+//
+// Returns:
+//   - string: Formatted comment content
+//   - error: Template execution error if any
+func NewSummaryComment(templateStr string, branches []string) (string, error) {
 	var taskBranchLine strings.Builder
 	var content strings.Builder
 	type Msg struct {
@@ -114,13 +132,13 @@ func NewSummaryComment(layout string, branches []string) (string, error) {
 	for _, branch := range branches {
 		taskBranchLine.WriteString("- [x] " + branch + "\n")
 	}
-	tpl := template.Must(template.New("message").Parse(layout))
+	tpl := template.Must(template.New("message").Parse(templateStr))
 	data := Msg{
 		Message: taskBranchLine.String(),
 	}
 	err := tpl.Execute(&content, data)
 	if err != nil {
-		logrus.Warnf("Failed to execute template: %s \n branches: %s \n err: %+v", layout, branches, err)
+		logrus.Warnf("Failed to execute template: %s \n branches: %s \n err: %+v", templateStr, branches, err)
 		return content.String(), fmt.Errorf("failed to execute template: %w", err)
 	}
 	return content.String(), nil

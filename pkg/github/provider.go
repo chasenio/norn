@@ -14,7 +14,7 @@ type Provider struct {
 	referenceService    *ReferenceService
 	mergeRequestService *PullRequestService
 	commentService      *CommentService
-	pickService         *PickService
+	cherrypickService   *CherryPickService
 	repositoryService   *RepositoryService
 }
 
@@ -31,7 +31,7 @@ func NewProvider(ctx context.Context, opt *tp.CreateProviderOption) *Provider {
 		referenceService:    NewReferenceService(client),
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
-		pickService:         NewPickService(client),
+		cherrypickService:   NewCherryPickService(client),
 		repositoryService:   NewRepositoryService(client),
 	}
 }
@@ -45,7 +45,7 @@ func NewProviderWithClient(client *gh.Client) *Provider {
 		referenceService:    NewReferenceService(client),
 		mergeRequestService: NewPullRequestService(client),
 		commentService:      NewCommentService(client),
-		pickService:         NewPickService(client),
+		cherrypickService:   NewCherryPickService(client),
 		repositoryService:   NewRepositoryService(client),
 	}
 }
@@ -74,6 +74,6 @@ func (p *Provider) ProviderID() tp.ProviderType {
 	return p.providerID
 }
 
-func (p *Provider) Pick() tp.PickService {
-	return p.pickService
+func (p *Provider) Cherry() tp.CherryService {
+	return p.cherrypickService
 }

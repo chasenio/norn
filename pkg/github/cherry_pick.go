@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type PickService struct {
+type CherryPickService struct {
 	client *gh.Client
 }
 
@@ -21,8 +21,8 @@ type RepoOption struct {
 	Repo  string
 }
 
-func NewPickService(client *gh.Client) *PickService {
-	return &PickService{
+func NewCherryPickService(client *gh.Client) *CherryPickService {
+	return &CherryPickService{
 		client: client,
 	}
 }
@@ -39,7 +39,7 @@ func parseRepo(repo string) (*RepoOption, error) {
 	}, nil
 }
 
-func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption) error {
+func (c *CherryPickService) CherryPick(ctx context.Context, repo string, opt *tp.Option) error {
 	prefix := "cherry-pick"
 	if opt.Prefix != "" && &opt.Prefix != nil {
 		prefix = opt.Prefix
@@ -138,13 +138,14 @@ func (c *PickService) Pick(ctx context.Context, repo string, opt *tp.PickOption)
 
 	// create the final pick commit
 	message := fmt.Sprintf("%s\n\n(cherry picked from commit %s)", *sourceCommit.Message, sourceCommit.GetSHA()[:7])
-	newCommit, _, err := c.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, &gh.Commit{
+	commit := &gh.Commit{
 		Author:    sourceCommit.Author,
 		Committer: _committer,
 		Message:   gh.String(message),
 		Tree:      &gh.Tree{SHA: mergeSha, Truncated: gh.Bool(false)},
 		Parents:   []*gh.Commit{{SHA: latestCommit.SHA}},
-	}, nil)
+	}
+	newCommit, _, err := c.client.Git.CreateCommit(ctx, repoOpt.Owner, repoOpt.Repo, commit, nil)
 
 	if err != nil {
 		logrus.Errorf("creating commit with different tree")
@@ -185,7 +186,7 @@ type MergeOption struct {
 	SHA   string
 }
 
-func (c *PickService) Merge(ctx context.Context, opt *MergeOption) (*string, error) {
+func (c *CherryPickService) Merge(ctx context.Context, opt *MergeOption) (*string, error) {
 	logrus.Infof("merge new commit %s to temp branch %s", opt.SHA, opt.Base)
 	mergeCommit, mergeResp, err := c.client.Repositories.Merge(ctx, opt.Owner, opt.Repo, &gh.RepositoryMergeRequest{
 		Base:          gh.String(opt.Base),

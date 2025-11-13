@@ -1,4 +1,4 @@
-package pick
+package cherrypick
 
 import (
 	"context"
@@ -9,11 +9,13 @@ import (
 	"strings"
 )
 
+// Service provides cherry-pick operations with configurable templates.
+// It manages the creation of summary and result comments for cherry-pick tasks.
 type Service struct {
 	provider tp.Provider
 }
 
-type CherryPickOptions struct {
+type Options struct {
 	SHA      string // commit sha
 	Repo     string
 	Target   string // target branch
@@ -55,8 +57,18 @@ type TaskResult struct {
 	Reason string
 }
 
-func NewPickService(provider tp.Provider) *Service {
-	return &Service{provider: provider}
+// NewService creates a new cherry-pick service with the given provider.
+// It uses default templates. Use NewServiceWithTemplates for custom templates.
+//
+// Parameters:
+//   - provider: The git provider implementation (e.g., GitHub, GitLab)
+//
+// Returns:
+//   - *Service: A configured cherry-pick service instance with default templates
+func NewService(provider tp.Provider) *Service {
+	return &Service{
+		provider: provider,
+	}
 }
 
 func (s *Service) FindCommentWithTask(ctx context.Context, task *Task, flag string) ([]tp.Comment, tp.Comment, error) {
@@ -73,18 +85,28 @@ func (s *Service) FindCommentWithTask(ctx context.Context, task *Task, flag stri
 	return comments, nil, nil
 }
 
-// PerformPickToBranches PerformPick commits from one branches to another
-func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment tp.Comment) (result []*TaskResult, err error) {
+func (s *Service) GetSelected(ctx context.Context, task *Task, template *MessageTemplate) ([]string, error) {
+	comments, err := s.provider.Comment().Find(ctx, &tp.FindCommentOption{MergeRequestID: task.MergeRequestID, Repo: task.Repo})
+	if err != nil {
+		logrus.Warnf("Get merge request comments failed: %s", err)
+		return nil, err
+	}
 
-	logrus.Debugf("Start to pick ...")
+	comment := FindSummaryWithFlag(comments, template.UniqueID)
+	if comment == nil {
+		logrus.Warnf("not found pick summary for unique ID [%s]", template.UniqueID)
+		return nil, nil
+	}
 
 	// get selected branches
 	selected := parseSelectedBranches(comment.Body())
+	return selected, nil
+}
 
-	if len(selected) == 0 {
-		logrus.Warnf("no selected branches")
-		return nil, nil
-	}
+// PerformPickToBranches PerformPick commits from one branches to another
+func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, selected []string, template *MessageTemplate) (result []*TaskResult, err error) {
+
+	logrus.Debugf("Start to pick ...")
 
 	logrus.Infof("Selected branches: %s", selected)
 
@@ -102,9 +124,9 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 			continue
 		}
 
-		logrus.Debugf("Picking %s to %s", *task.SHA, branch)
+		logrus.Debugf("cherry-pick [%s] to [%s]", *task.SHA, branch)
 		// cherry-pick commit
-		err := s.provider.Pick().Pick(ctx, task.Repo, &tp.PickOption{
+		err := s.provider.Cherry().CherryPick(ctx, task.Repo, &tp.Option{
 			Branch: branch,
 			SHA:    *task.SHA,
 			Prefix: task.BranchPrefix,
@@ -129,9 +151,9 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 			status = SucceedStatus
 			result = append(result, &TaskResult{Status: status, Branch: branch})
 		}
-		logrus.Infof("Pick %s to %s %s", *task.SHA, branch, status)
+		logrus.Infof("cherry-pick %s to %s %s", *task.SHA, branch, status)
 	}
-	logrus.Infof("Picke Result %v", result)
+	logrus.Infof("Pick Result %v", result)
 
 	if len(result) == 0 {
 		logrus.Warnf("No branch to pick")
@@ -140,7 +162,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 
 	// generate content
 	logrus.Infof("Generate pick result content")
-	content, err := NewResultComment(tp.PickResultTemplate, result)
+	content, err := NewResultComment(template.Text, result)
 	if err != nil {
 		logrus.Errorf("Generate pick result content failed: %s", err)
 		return nil, err
@@ -159,36 +181,22 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 	return result, nil
 }
 
-func (s *Service) PerformPick(ctx context.Context, opt *CherryPickOptions) error {
-	if s.provider == nil || opt == nil {
-		logrus.Error("provider or opt is nil")
-		return tp.ErrInvalidOptions
+// CreateSummary submit pick summary comment
+func (s *Service) CreateSummary(ctx context.Context, task *Task, template *Templates) error {
+	if template == nil {
+		template = DefaultTemplates()
 	}
-
-	err := s.provider.Pick().Pick(ctx, opt.Repo, &tp.PickOption{
-		Branch: opt.Target,
-		SHA:    opt.SHA,
-	})
-	if err != nil {
-		logrus.Warnf("Pick failed: %s", err)
-		return err
-	}
-	return nil
-}
-
-// CreateSummaryWithTask submit pick summary comment
-func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error {
 	// generate branch list of comment body
 	targets := generateTargetBranches(task)
 	logrus.Debugf("Summary branches: %+v", targets)
 	if len(targets) == 0 {
-		logrus.Infof("No cherry-pick branches, skip")
+		logrus.Debug("No target branches, delete summary comment if exists")
 		s.DeleteSummaryWithFlag(ctx, task)
 		return nil
 	}
 
 	// generate comment body
-	summaryComment, err := NewSummaryComment(tp.CherryPickTaskSummaryTemplate, targets)
+	summaryComment, err := NewSummaryComment(template.Summary.Text, targets)
 	if err != nil {
 		logrus.Errorf("NewSummaryComment failed: %+v", err)
 		return err
@@ -196,7 +204,7 @@ func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error {
 
 	// Check if the comment is existed
 	// if exists, regen summary
-	_, comment, err := s.FindCommentWithTask(ctx, task, tp.CherryPickSummaryFlag)
+	_, comment, err := s.FindCommentWithTask(ctx, task, template.Summary.UniqueID)
 	if err != nil {
 		logrus.Debugf("CheckSummaryExist failed: %+v", err)
 		return err
@@ -239,48 +247,37 @@ func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error {
 	return nil
 }
 
-func (s *Service) ProcessPick(ctx context.Context, task *Task) error {
+func (s *Service) CherryPick(ctx context.Context, task *Task, template *Templates) error {
 	var err error
+	if template == nil {
+		template = DefaultTemplates()
+	}
 	if task.IsSummary {
-		err = s.CreateSummaryWithTask(ctx, task)
+		err = s.CreateSummary(ctx, task, template)
 		if err != nil {
 			logrus.Errorf("create summary err: %s", err)
 		}
 	} else {
-		// check if pick result is exist, if existed, skip
-		comments, result, err := s.FindCommentWithTask(ctx, task, tp.CherryPickResultFlag)
-		if result != nil {
-			logrus.Warnf("pick result is exist %s.", result)
-			return nil
-		}
+		// get selected branches
+		selected, err := s.GetSelected(ctx, task, template.Summary)
+
 		if err != nil {
-			logrus.Warnf("get pick result err: %s", err.Error())
+			logrus.Errorf("get selected branches err: %s", err)
 			return err
 		}
 
-		// check if summary comment is exist, if not exist, skip
-		comment := FindSummaryWithFlag(comments, tp.CherryPickSummaryFlag)
-		if comment == nil {
-			logrus.Warnf("not found pick summary [%s]", comment)
+		if len(selected) == 0 {
+			logrus.Warnf("no selected branches")
 			return nil
 		}
+
 		// summary comment is exist, perform pick
-		_, err = s.PerformPickToBranches(ctx, task, comment)
+		_, err = s.PerformPickToBranches(ctx, task, selected, template.CherryPickResult)
 		if err != nil {
 			logrus.Errorf("perform pick err: %s", err)
 		}
 	}
 	return err
-}
-
-// CheckSummaryExist check if summary comment is exist
-func (s *Service) CheckSummaryExist(ctx context.Context, repo string, mergeRequestID string) (tp.Comment, error) {
-	comments, err := s.provider.Comment().Find(ctx, &tp.FindCommentOption{MergeRequestID: mergeRequestID, Repo: repo})
-	if err != nil {
-		logrus.Warnf("Get merge request comments failed: %s", err)
-		return nil, err
-	}
-	return FindSummaryWithFlag(comments, tp.CherryPickSummaryFlag), nil
 }
 
 // FindSummaryWithFlag check if comment is in merge request

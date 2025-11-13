@@ -20,5 +20,5 @@ type Provider interface {
 	Comment() CommentService
 	Repository() RepositoryService
 	ProviderID() ProviderType
-	Pick() PickService
+	Cherry() CherryService
 }
