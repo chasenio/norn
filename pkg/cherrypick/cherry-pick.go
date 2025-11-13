@@ -126,7 +126,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, selecte
 
 		logrus.Debugf("cherry-pick [%s] to [%s]", *task.SHA, branch)
 		// cherry-pick commit
-		err := s.provider.Pick().CherryPick(ctx, task.Repo, &tp.Option{
+		err := s.provider.CherryPick().CherryPick(ctx, task.Repo, &tp.Option{
 			Branch: branch,
 			SHA:    *task.SHA,
 			Prefix: task.BranchPrefix,

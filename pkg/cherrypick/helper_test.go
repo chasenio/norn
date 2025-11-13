@@ -31,7 +31,7 @@ func TestNewResultComment(t *testing.T) {
 			Reason: "adsfasdf",
 		},
 	}
-	comment, err := NewResultComment(tp.PickResultTemplate, result)
+	comment, err := NewResultComment(tp.CherryPickResultTemplate, result)
 	if err != nil {
 		t.Error("NewResultComment() = nil, want not nil")
 	}

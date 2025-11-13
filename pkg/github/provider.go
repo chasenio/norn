@@ -74,6 +74,6 @@ func (p *Provider) ProviderID() tp.ProviderType {
 	return p.providerID
 }
 
-func (p *Provider) Pick() tp.Service {
+func (p *Provider) CherryPick() tp.CherryPickService {
 	return p.cherrypickService
 }
