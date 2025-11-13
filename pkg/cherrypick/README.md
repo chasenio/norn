@@ -161,13 +161,10 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 
 Performs cherry-pick operations to multiple branches based on user selections.
 
-#### CreateSummaryWithTask
+#### CreateSummary
 
 ```go
-func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error
-```
-
-Creates or updates a cherry-pick summary comment on a merge request.
+func (s *Service) CreateSummary(ctx context.Context, task *Task, template *Templates) error
 
 ## Task Structure
 
