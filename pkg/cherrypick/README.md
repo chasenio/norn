@@ -61,12 +61,14 @@ Please select branches to cherry-pick to:
 `),
 }
 
-// Create service with custom templates
-service := cherrypick.NewServiceWithTemplates(provider, templates)
+// Create service
+service := cherrypick.NewService(provider)
 
 // Or use the helper to create templates with defaults fallback
 templates := cherrypick.NewTemplates(summaryTemplate, resultTemplate)
-service := cherrypick.NewServiceWithTemplates(provider, templates)
+
+// Pass custom templates to methods as needed, e.g.:
+err := service.CherryPick(context.Background(), task, templates)
 ```
 
 ### CLI Usage
