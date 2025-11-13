@@ -145,10 +145,10 @@ Creates a new cherry-pick service with custom templates.
 
 ### Service Methods
 
-#### ProcessPick
+#### CherryPick
 
 ```go
-func (s *Service) ProcessPick(ctx context.Context, task *Task) error
+func (s *Service) CherryPick(ctx context.Context, task *Task) error
 ```
 
 Processes a cherry-pick task, either creating a summary or performing the actual cherry-pick.
