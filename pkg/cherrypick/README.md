@@ -44,21 +44,21 @@ You can provide custom Go templates for both summary and result comments. Templa
 ```go
 // Create custom templates
 templates := &cherrypick.Templates{
-    SummaryTemplate: `
+    Summary: cherrypick.MessageTemplate(`
 🍒 Cherry-pick Request
 Please select branches to cherry-pick to:
 
 {{ .Message }}
 
 <!-- cherry-pick-summary -->
-`,
-    ResultTemplate: `
+`),
+    CherryPickResult: cherrypick.MessageTemplate(`
 🎉 Cherry-pick Results
 
 {{ .Message }}
 
 <!-- cherry-pick-result -->
-`,
+`),
 }
 
 // Create service with custom templates
