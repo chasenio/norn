@@ -1,4 +1,4 @@
-package pick
+package cherrypick
 
 import (
 	"context"
@@ -10,7 +10,9 @@ import (
 )
 
 type Service struct {
-	provider tp.Provider
+	provider               tp.Provider
+	summaryTemplate        string
+	resultTemplate         string
 }
 
 type CherryPickOptions struct {
@@ -55,8 +57,19 @@ type TaskResult struct {
 	Reason string
 }
 
-func NewPickService(provider tp.Provider) *Service {
-	return &Service{provider: provider}
+func NewPickService(provider tp.Provider, summaryTemplate, resultTemplate string) *Service {
+	// Use default templates if not provided
+	if summaryTemplate == "" {
+		summaryTemplate = tp.CherryPickTaskSummaryTemplate
+	}
+	if resultTemplate == "" {
+		resultTemplate = tp.PickResultTemplate
+	}
+	return &Service{
+		provider:        provider,
+		summaryTemplate: summaryTemplate,
+		resultTemplate:  resultTemplate,
+	}
 }
 
 func (s *Service) FindCommentWithTask(ctx context.Context, task *Task, flag string) ([]tp.Comment, tp.Comment, error) {
@@ -140,7 +153,7 @@ func (s *Service) PerformPickToBranches(ctx context.Context, task *Task, comment
 
 	// generate content
 	logrus.Infof("Generate pick result content")
-	content, err := NewResultComment(tp.PickResultTemplate, result)
+	content, err := NewResultComment(s.resultTemplate, result)
 	if err != nil {
 		logrus.Errorf("Generate pick result content failed: %s", err)
 		return nil, err
@@ -188,7 +201,7 @@ func (s *Service) CreateSummaryWithTask(ctx context.Context, task *Task) error {
 	}
 
 	// generate comment body
-	summaryComment, err := NewSummaryComment(tp.CherryPickTaskSummaryTemplate, targets)
+	summaryComment, err := NewSummaryComment(s.summaryTemplate, targets)
 	if err != nil {
 		logrus.Errorf("NewSummaryComment failed: %+v", err)
 		return err

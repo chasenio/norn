@@ -1,4 +1,4 @@
-package pick
+package cherrypick
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 
 func TestPick_CreateSummaryWithTask(t *testing.T) {
 	ctx := context.Background()
-	provider := github.NewProvider(ctx, "")
+	provider := github.NewProvider(ctx, &tp.CreateProviderOption{Token: ""})
 	pickOpt := &Task{
 		Repo: "kentio/pick",
 		Branches: []string{
@@ -22,12 +22,12 @@ func TestPick_CreateSummaryWithTask(t *testing.T) {
 			"r2",
 			"master",
 		},
-		Form:           "r1",
+		From:           "r1",
 		IsSummary:      false,
 		SHA:            common.String(""),
 		MergeRequestID: "64",
 	}
-	pick := NewPickService(provider, pickOpt.Branches)
+	pick := NewPickService(provider, "", "")
 	err := pick.CreateSummaryWithTask(ctx, pickOpt)
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -37,7 +37,7 @@ func TestPick_CreateSummaryWithTask(t *testing.T) {
 
 func TestPick(t *testing.T) {
 	ctx := context.Background()
-	provider := github.NewProvider(ctx, "")
+	provider := github.NewProvider(ctx, &tp.CreateProviderOption{Token: ""})
 	task := &Task{
 		Repo: "kentio/pick",
 		Branches: []string{
@@ -45,12 +45,12 @@ func TestPick(t *testing.T) {
 			"r2",
 			"master",
 		},
-		Form:           "r1",
+		From:           "r1",
 		IsSummary:      false,
 		SHA:            common.String(""),
 		MergeRequestID: "2",
 	}
-	pick := NewPickService(provider, task.Branches)
+	pick := NewPickService(provider, "", "")
 
 	//err := pick.ProcessPick(ctx, task)
 	err := pick.PerformPick(ctx, &CherryPickOptions{
@@ -69,7 +69,7 @@ func TestPick(t *testing.T) {
 func TestPick_CheckSummaryExist(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	ctx := context.Background()
-	provider := github.NewProvider(ctx, "")
+	provider := github.NewProvider(ctx, &tp.CreateProviderOption{Token: ""})
 	pickOpt := &Task{
 		Repo: "kentio/test_cherry_pick",
 		Branches: []string{
@@ -77,12 +77,12 @@ func TestPick_CheckSummaryExist(t *testing.T) {
 			"release/23.04",
 			"master",
 		},
-		Form:           "release/23.03",
+		From:           "release/23.03",
 		IsSummary:      false,
 		SHA:            common.String(""),
 		MergeRequestID: "54",
 	}
-	pick := NewPickService(provider, pickOpt.Branches)
+	pick := NewPickService(provider, "", "")
 	// Is Exist
 	comment, err := pick.CheckSummaryExist(ctx, pickOpt.Repo, pickOpt.MergeRequestID)
 	if err != nil {
@@ -134,7 +134,7 @@ func TestPerformPickToBranches(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	ctx := context.Background()
 	token := ""
-	provider, _ := common.NewProvider(ctx, "github", token)
+	provider, _ := common.NewProvider(ctx, "github", &tp.CreateProviderOption{Token: token})
 
 	pickOpt := &Task{
 		Repo: "kentio/test_cherry_pick",
@@ -143,12 +143,12 @@ func TestPerformPickToBranches(t *testing.T) {
 			"release/23.04",
 			"master",
 		},
-		Form:           "release/23.03",
+		From:           "release/23.03",
 		IsSummary:      true,
 		SHA:            common.String(""),
 		MergeRequestID: "66",
 	}
-	pick := NewPickService(provider, pickOpt.Branches)
+	pick := NewPickService(provider, "", "")
 
 	_, comment, err := pick.FindCommentWithTask(ctx, pickOpt, tp.CherryPickSummaryFlag)
 

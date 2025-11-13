@@ -1,4 +1,4 @@
-package pick
+package cherrypick
 
 import (
 	"crypto/md5"

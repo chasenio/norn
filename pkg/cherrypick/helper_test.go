@@ -1,4 +1,4 @@
-package pick
+package cherrypick
 
 import (
 	tp "github.com/chasenio/norn/pkg/types"

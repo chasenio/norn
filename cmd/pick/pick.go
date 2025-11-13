@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/chasenio/norn/internal"
 	"github.com/chasenio/norn/pkg/common"
-	"github.com/chasenio/norn/pkg/pick"
+	"github.com/chasenio/norn/pkg/cherrypick"
 	tp "github.com/chasenio/norn/pkg/types"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -131,9 +131,9 @@ func NewPickCommand() *cli.Command {
 			sha, isSummary := c.String("sha"), c.Bool("is-summary")
 			logrus.Debugf("SHA: %s, IsSummary: %t", sha, isSummary)
 
-			p := pick.NewPickService(provider)
+			p := cherrypick.NewPickService(provider, "", "")
 
-			pickOpt := &pick.Task{
+			pickOpt := &cherrypick.Task{
 				Repo:           repo,
 				Branches:       profile.Branches,
 				From:           from,
